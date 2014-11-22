@@ -7,6 +7,7 @@
 #include "err.h"
 #include "u8250.h"
 #include "libk.h"
+#include "screenbuffer.h"
 
 void Syscall::init(void) {
     IDT::addTrapHandler(100,(uint32_t)syscallTrap,3);
@@ -183,14 +184,35 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		Debug::printf("Finished enabling graphics\n");
 		//short* gr = (short*)0xb8000;
 		//gr[0] = 0xFFFF;
-		unsigned char* pixels = (unsigned char*)0xA0000;
+		/*unsigned char* pixels = (unsigned char*)0xA0000;
 		for(int a = 0; a < 10000; ++a)
 		{
 			pixels[a] = a%256;
-		}
+		}*/
+
+		const char* buf = (const char*)a0;
+		const unsigned int len = a1;
+
 	}
 	return 0;
-   
+	
+	case 16: //get screen buffer
+	{
+		ScreenBuffer* screenBuffer = new ScreenBuffer(320, 200);
+
+		const long resourceId = Process::current->resources->open(screenBuffer);
+
+		return resourceId;
+	}
+	return 0;	
+
+	case 17: //write screen buffer
+	{
+		const unsigned char* buf = (const char*)(a0);
+		unsigned char* vgaBuffer = (unsigned char*)0xA0000;
+		memcpy(buf, vgaBuffer, 320*200);
+	}
+	return 0;
     default:
         Process::trace("syscall(%d,%d,%d)",num,a0,a1);
         return -1;

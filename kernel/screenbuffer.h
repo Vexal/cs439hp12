@@ -1,6 +1,7 @@
 #ifndef _SCREENBUFFER_H_
 #define _SCREENBUFFER_H_
 #include "resource.h"
+#include "machine.h"
 
 class ScreenBuffer : public Resource
 {
