@@ -17,4 +17,6 @@ extern long fork();
 extern long join(long proc);
 extern long shutdown();
 extern long testdraw(long c);
+extern long GetScreenBuffer();
+extern long WriteScreenBuffer(long resourceId, unsigned char* buf);
 #endif

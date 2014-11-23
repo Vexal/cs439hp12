@@ -6,13 +6,14 @@
 class ScreenBuffer : public Resource
 {
 private:
+	static constexpr unsigned int vgaMemory = 0xA0000;
 	const int width;
 	const int height;
-	char* buffer;
+	unsigned char* const buffer;
 
 public:
 	ScreenBuffer(int width, int height);
-	inline void WriteBuffer(const char* buffer, unsigned int len) {memcpy(this->buffer, buffer, len);}
+	inline void WriteBuffer(const unsigned char* buffer) {memcpy(this->buffer, buffer, this->width * this->height);}
 	inline void WriteBuffer(int x, int y, unsigned char val) {this->buffer[this->width * y + x] = val;}
 
 	inline int GetWidth() const {return this->width;}

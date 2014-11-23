@@ -208,9 +208,15 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 
 	case 17: //write screen buffer
 	{
-		const unsigned char* buf = (const char*)(a0);
-		unsigned char* vgaBuffer = (unsigned char*)0xA0000;
-		memcpy(buf, vgaBuffer, 320*200);
+		ScreenBuffer* screenBuffer = static_cast<ScreenBuffer*>(Process::current->resources->get(a0, SCREEN_BUFFER));
+		if(screenBuffer == nullptr)
+		{
+			return -1;
+		}
+
+
+		const unsigned char* buf = (const unsigned char*)(a1);
+		screenBuffer->WriteBuffer(buf);
 	}
 	return 0;
     default:
