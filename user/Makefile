@@ -1,4 +1,4 @@
-PROGS = shell ls shutdown echo cat TestProgram
+PROGS = shell ls shutdown echo cat TestProgram login
 
 all : $(PROGS)
 
@@ -14,6 +14,9 @@ ls : CFILES=ls.c libc.c heap.c
 shutdown : CFILES=shutdown.c libc.c heap.c
 
 cat : CFILES=cat.c libc.c heap.c
+
+login: CCFILES=login.cc
+login: CFILES=libc.c heap.c
 
 TestProgram : CCFILES=TestProgram.cc
 TestProgram : CFILES=libc.c heap.c

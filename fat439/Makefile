@@ -1,4 +1,5 @@
-CFLAGS = -std=c99 -m32 -g -O3 -Wall -Werror
+CFLAGS = -std=c99 -m32 -g -O0 -Wall
+CCFLAGS = -std=c++0x -fno-exceptions -fno-rtti -m32 -ffreestanding -nostdlib -nodefaultlibs -g -O0 -Wall
 PROGS = mkfs
 
 #OFILES = $(subst .c,.o,$(CFILES))
@@ -12,7 +13,7 @@ mkfs : mkfs.o
 .SECONDARY :
 
 
-FILES = ../user/shutdown ../user/shutdown.c ../user/shell.c ../user/shell ../user/ls.c ../user/ls ../user/echo ../user/echo.c ../user/cat.c ../user/cat f1.txt f2.txt panic ../user/TestProgram
+FILES = ../user/shutdown ../user/shutdown.c ../user/shell.c ../user/shell ../user/ls.c ../user/ls ../user/echo ../user/echo.c ../user/cat.c ../user/cat f1.txt f2.txt panic ../user/TestProgram ../user/login
 
 ../user/% :
 	make -C ../user
