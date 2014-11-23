@@ -143,7 +143,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
              /* find the security exposures in this code */
              char* name = (char*) a0;
              char** userArgs = (char**) a1;
-
+//
              SimpleQueue<const char*> args;
 
              int i = 0;
