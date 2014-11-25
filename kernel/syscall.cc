@@ -198,7 +198,15 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 	
 	case 16: //get screen buffer
 	{
-		ScreenBuffer* screenBuffer = new ScreenBuffer(320, 200);
+		//we have to know whether there is already a process controlling the global buffer.
+		//we need to fool subsequent programs into thinking they have access to a real buffer.
+
+		ScreenBuffer* screenBuffer = new ScreenBuffer(320, 200, Process::current->getId());
+
+		if(ScreenBuffer::globalBuffer == nullptr)
+		{
+			ScreenBuffer::globalBuffer = screenBuffer;
+		}
 
 		const long resourceId = Process::current->resources->open(screenBuffer);
 

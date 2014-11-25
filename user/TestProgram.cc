@@ -17,8 +17,8 @@ int main()
 	testNew[3] = 0;
 	
 	puts(testNew);
-//	testdraw('a');
-//	puts("Finished calling testdraw\n");
+	testdraw('a');
+	puts("Finished calling testdraw\n");
 	delete[] testNew;
 
 	const long screenBufferId = GetScreenBuffer();
