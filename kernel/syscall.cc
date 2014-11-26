@@ -9,6 +9,8 @@
 #include "libk.h"
 #include "screenbuffer.h"
 
+unsigned char* networkBuffer = nullptr;
+
 void Syscall::init(void) {
     IDT::addTrapHandler(100,(uint32_t)syscallTrap,3);
 }
@@ -181,18 +183,45 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		
 			Debug::printf("The thing at %x  is %x\n", a, BAR0);
 		}	
-		Debug::printf("Finished enabling graphics\n");
-		//short* gr = (short*)0xb8000;
-		//gr[0] = 0xFFFF;
-		/*unsigned char* pixels = (unsigned char*)0xA0000;
-		for(int a = 0; a < 10000; ++a)
-		{
-			pixels[a] = a%256;
-		}*/
+		int ioaddr = 0xc000;
+        outb( ioaddr + 0x52, 0x0);
 
-		const char* buf = (const char*)a0;
-		const unsigned int len = a1;
+        const long mac = inl(ioaddr);
+        Debug::printf("Found mac0-5 %x\n", mac);
 
+        const long receiveBufferAddress = inl(ioaddr + 0x30);
+        networkBuffer = new unsigned char[10000]();
+
+
+        outl(ioaddr + 0x30, (long)networkBuffer);
+        const long receiveBufferAddress2 = inl(ioaddr + 0x30);
+        Debug::printf("Receive buffer: %x, then after setting: %x\n", receiveBufferAddress, receiveBufferAddress2);
+
+        const long imrMask = inl(ioaddr + 0x3C);
+        outw(ioaddr + 0x3C, 0x0005);
+        const long imrMask2 = inl(ioaddr + 0x3C);
+        Debug::printf("IMR mask: %x, then after setting: %x\n", imrMask, imrMask2);
+
+        const long isrMask = inl(ioaddr + 0x3e);
+        //outw(ioaddr + 0x3E, 0x0005);
+        const long isrMask2 = inl(ioaddr + 0x3E);
+        Debug::printf("ISR mask: %x, then after setting: %x\n", isrMask, isrMask2);
+
+        const long rcvConfig =  0xf | (1 << 7);
+        const long rcvConfigInitial = inl(ioaddr + 0x44);
+        outl(ioaddr + 0x44,rcvConfig); // (1 << 7) is the WRAP bit, 0xf is AB+AM+APM+AAP
+        const long rcvConfigSet = inl(ioaddr + 0x44);
+
+        Debug::printf("Receive Config: %x, then after setting: %x\n", rcvConfigInitial, rcvConfigSet);
+
+
+        const long reAndTe = inb(ioaddr + 0x37);
+        outb(ioaddr + 0x37, 0x0C);
+        const long reAndTe2 = inb(ioaddr + 0x37);
+        Debug::printf("Receive / Transmit enable: %x, then after setting: %x\n", reAndTe, reAndTe2);
+
+        
+        
 	}
 	return 0;
 	

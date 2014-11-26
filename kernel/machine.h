@@ -18,6 +18,7 @@ extern "C" int inb(int port);
 extern "C" int inl(int port);
 extern "C" void outb(int port, int val);
 extern "C" void outl(int port, int val);
+extern "C" void outw(int port, int val);
 extern "C" void ltr(uint32_t tr);
 
 extern "C" void pageFaultHandler();

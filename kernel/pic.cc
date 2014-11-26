@@ -12,6 +12,7 @@
 #define D2 (C2 + 1)       /* data port for PIC2 */
 
 int firstIdt = 0x30;
+extern unsigned char* networkBuffer;
 
 void Pic::init() {
 
@@ -88,17 +89,45 @@ void pic_eoi(int irq) {
     outb(C1,0x20);
 }
 
+int netCount = 0;
 extern "C" void pic_irq(int irq) {
     Process::startIrq();
     switch (irq) {
-    case 0: Pit::handler(); break;
+    case 0: 
+        Pit::handler(); 
+        Process::yield();
+        break;
     case 1: /*Keyboard::handler();*/ break;
     case 4: /*com1 */ break;
+    case 11:
+    {
+
+        outw(0xc000 + 0x3E, 0x1); // Interrupt Status - Clears the Rx OK bit, acknowledging a packet has been received, 
+                               // and is now in rx_buffer
+
+        if(netCount > 15)
+        {
+            break;
+        }
+        //if(networkBuffer[0] != 0)
+        //{
+            for(int a = 0; a < 1000; ++a)
+            {     
+                Debug::printf("%d ", networkBuffer[a]);
+                networkBuffer[a] = 0;
+            }
+
+            ++netCount;
+        //}
+
+        Debug::printf("\n\n\n");
+    }
+    break;
     case 15: /* ide */ break;
     default: Debug::printf("interrupt %d\n",irq);
     }
     pic_eoi(irq); /* the PIC can deliver the next interrupt,
                      but interrupts are still disabled */
-    Process::yield();
+
     Process::endIrq();
 }
