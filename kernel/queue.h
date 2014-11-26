@@ -1,6 +1,47 @@
 #ifndef _QUEUE_H_
 #define _QUEUE_H_
 
+template<typename T> class List
+{
+	class ListNode
+	{
+	public:
+		ListNode* next;
+		ListNode* previous;
+		T value;
+
+		ListNode(const T& val) :
+			next(nullptr),
+			previous(nullptr),
+			value(value) {}
+	};
+
+	ListNode* first;
+
+public:
+	List() :
+		first(nullptr)
+	{
+
+	}
+
+	void Push(const T& v)
+	{
+		ListNode* newNode = new ListNode(v);
+
+		if(this->first == nullptr)
+		{
+			this->first = newNode;
+		}
+		else
+		{
+			this->first->previous = newNode;
+			newNode->next = this->first;
+			this->first = newNode;
+		}
+	}
+};
+
 template<typename T> class Queue {
 public:
     virtual void addTail(T v) = 0;

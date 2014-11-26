@@ -10,7 +10,8 @@ enum ResourceType {
     FILE,
     TABLE,
     OTHER,
-    SCREEN_BUFFER
+    SCREEN_BUFFER,
+    BUFFER_REQUEST
 };
 
 class Resource {

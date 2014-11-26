@@ -7,24 +7,65 @@ extern "C" {
 #include "heap.h"
 }
 
-void* operator new(size_t size)
+inline void* operator new(size_t size)
 {
 	return malloc(size);
 }
 
-void operator delete(void* p)
+inline void operator delete(void* p)
 {
 	return free(p);
 }
 
-void* operator new[](size_t size)
+inline void* operator new[](size_t size)
 {
 	return malloc(size);
 }
 
-void operator delete[](void* p)
+inline void operator delete[](void* p)
 {
 	return free(p);
 }
+
+template<typename T> class List
+{
+	class ListNode
+	{
+	public:
+		ListNode* next;
+		ListNode* previous;
+		T value;
+
+		ListNode(const T& val) :
+			next(nullptr),
+			previous(nullptr),
+			value(value) {}
+	};
+
+	ListNode* first;
+
+public:
+	List() :
+		first(nullptr)
+	{
+
+	}
+
+	void Push(const T& v)
+	{
+		ListNode* newNode = new ListNode(v);
+
+		if(this->first == nullptr)
+		{
+			this->first = newNode;
+		}
+		else
+		{
+			this->first->previous = newNode;
+			newNode->next = this->first;
+			this->first = newNode;
+		}
+	}
+};
 
 #endif

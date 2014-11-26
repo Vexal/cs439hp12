@@ -201,16 +201,29 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		//we have to know whether there is already a process controlling the global buffer.
 		//we need to fool subsequent programs into thinking they have access to a real buffer.
 
-		ScreenBuffer* screenBuffer = new ScreenBuffer(320, 200, Process::current->getId());
+
 
 		if(ScreenBuffer::globalBuffer == nullptr)
 		{
+			ScreenBuffer* screenBuffer = new ScreenBuffer(320, 200, Process::current->getId());
 			ScreenBuffer::globalBuffer = screenBuffer;
+			const long resourceId = Process::current->resources->open(screenBuffer);
+
+			return resourceId;
+		}
+		else
+		{
+			/*BufferRequest* bufferRequest = new BufferRequest(Process::current->getId());
+			const long resourceId = Process::current->resources->open(bufferRequest);
+			bufferRequest->resourceId = resourceId;*/
+			ScreenBuffer* screenBuffer = new ScreenBuffer(80, 60, Process::current->getId());
+			const long resourceId = Process::current->resources->open(screenBuffer);
+			ScreenBuffer::globalBuffer->AddBufferRequest(screenBuffer);
+
+			return resourceId;
 		}
 
-		const long resourceId = Process::current->resources->open(screenBuffer);
 
-		return resourceId;
 	}
 	return 0;	
 
@@ -226,6 +239,21 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		const unsigned char* buf = (const unsigned char*)(a1);
 		screenBuffer->WriteBuffer(buf);
 	}
+	return 0;
+
+	case 18: //GetNewWindowRequests()
+	{
+		//we would like to return to the requesting process a list of new processes requesting windows so that
+		//the requesting process can do things for them.
+		//we only want to grant this privilege to the process owning the global screen buffer.
+
+		ScreenBuffer* screenBuffer = ScreenBuffer::globalBuffer;
+		if(screenBuffer == nullptr || screenBuffer->GetOwnerProcessId() != Process::current->getId())
+		{
+			return -1;
+		}
+	}
+
 	return 0;
     default:
         Process::trace("syscall(%d,%d,%d)",num,a0,a1);

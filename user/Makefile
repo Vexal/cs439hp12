@@ -18,7 +18,7 @@ cat : CFILES=cat.c libc.c heap.c
 login: CCFILES=login.cc
 login: CFILES=libc.c heap.c
 
-TestProgram : CCFILES=TestProgram.cc
+TestProgram : CCFILES=TestProgram.cc DesktopWindowManager.cc
 TestProgram : CFILES=libc.c heap.c
 $(PROGS) : % : Makefile $(OFILES)
 	ld -N -m elf_i386 -e start -Ttext=0x80000000 -o $@ $(OFILES)
