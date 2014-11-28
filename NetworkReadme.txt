@@ -1,6 +1,13 @@
 Enable busmastering. (done in pushed code)
 
 Create file runqemu-ifup and scripts (thing my dad sent) -- no longer need sudo for qemu
+
+Create file with any name and paste these contents:
+http://git.yoctoproject.org/cgit.cgi/poky/tree/scripts/runqemu-gen-tapdevs
+
+Create file called runqemu-ifup in same directory as script and paste these contents: http://git.yoctoproject.org/cgit.cgi/poky/tree/scripts/runqemu-ifup
+
+
 1000 1000 3 /
 
 
