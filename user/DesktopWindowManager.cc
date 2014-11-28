@@ -60,6 +60,7 @@ void DesktopWindowManager::Run()
 			}
 		}
 
+		this->acquireNewChildProcesses();
 		this->sendBufferData();
 		++testCount;
 	}

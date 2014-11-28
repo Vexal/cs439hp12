@@ -1,4 +1,4 @@
-PROGS = shell ls shutdown echo cat TestProgram login
+PROGS = shell ls shutdown echo cat TestProgram login TestGame
 
 all : $(PROGS)
 
@@ -26,6 +26,10 @@ login: CFILES=libc.c heap.c
 TestProgram : CFILES=libc.c heap.c
 
 TestProgram : CCFILES=TestProgram.cc DesktopWindowManager.cc
+
+TestGame : CFILES=libc.c heap.c
+
+TestGame : CCFILES=TestGame.cc
 
 $(PROGS) : % : Makefile $(OFILES)
 	ld -N -m elf_i386 -e start -Ttext=0x80000000 -o $@ $(OFILES)
