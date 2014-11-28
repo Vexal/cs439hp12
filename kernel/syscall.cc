@@ -257,8 +257,6 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		//we have to know whether there is already a process controlling the global buffer.
 		//we need to fool subsequent programs into thinking they have access to a real buffer.
 
-
-
 		if(ScreenBuffer::globalBuffer == nullptr)
 		{
 			ScreenBuffer* screenBuffer = new ScreenBuffer(320, 200, Process::current->getId());
@@ -269,20 +267,16 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		}
 		else
 		{
-			/*BufferRequest* bufferRequest = new BufferRequest(Process::current->getId());
-			const long resourceId = Process::current->resources->open(bufferRequest);
-			bufferRequest->resourceId = resourceId;*/
-			ScreenBuffer* screenBuffer = new ScreenBuffer(80, 60, Process::current->getId());
+			ScreenBuffer* globalSreenBuffer = ScreenBuffer::globalBuffer;
+			Debug::printf("Creating a child buffer for process: %d.\n", Process::current->getId());
+			unsigned char* newBuffer = new unsigned char[80 * 60];
+			ScreenBuffer* screenBuffer = new ScreenBuffer(80, 60, Process::current->getId(), reinterpret_cast<unsigned int>(newBuffer));
 			const long resourceId = Process::current->resources->open(screenBuffer);
-			ScreenBuffer::globalBuffer->AddBufferRequest(screenBuffer);
+			globalSreenBuffer->AddBufferRequest(screenBuffer);
 
 			return resourceId;
 		}
-
-
 	}
-	return 0;	
-
 	case 17: //write screen buffer
 	{
 		ScreenBuffer* screenBuffer = static_cast<ScreenBuffer*>(Process::current->resources->get(a0, SCREEN_BUFFER));
@@ -312,9 +306,13 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 
 		const int requestCount = screenBuffer->GetBufferRequestCount();
 
+		if(requestCount < 1)
+		{
+			return 0;
+		}
+
 		int* processIds = (int*)a0;
 		Debug::printf("Sending %d new process requests to window manager for result buffer %x.\n", requestCount, (long)processIds);
-		//int* processIds = new int[requestCount];
 
 		for(int a = 0; a < requestCount; ++a)
 		{
@@ -335,6 +333,30 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		}
 
 		return screenBuffer->GetBufferRequestCount();
+	}
+
+	case 20: //GetChildBuffer(unsigned char* buf, int processId)
+	{
+		Debug::printf("About to get child buffer to draw from here.\n");
+		ScreenBuffer* screenBuffer = ScreenBuffer::globalBuffer;
+		if(screenBuffer == nullptr || screenBuffer->GetOwnerProcessId() != Process::current->getId())
+		{
+			return -1;
+		}
+
+		unsigned char* buf = (unsigned char*)a0;
+		const int processId = a1;
+
+		const ScreenBuffer* const childBuffer = screenBuffer->GetChildBuffer(processId);
+
+		if(childBuffer == nullptr)
+		{
+			Debug::printf("Error, buffer for process %d is null.\n", processId);
+		}
+		const int childBufferSize = childBuffer->GetWidth() * childBuffer->GetHeight();
+
+		memcpy(buf, childBuffer->GetBuffer(), childBufferSize);
+		return 0;
 	}
     default:
         Process::trace("syscall(%d,%d,%d)",num,a0,a1);

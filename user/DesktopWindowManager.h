@@ -14,6 +14,11 @@ private:
 	const int processId;
 public:
 	ChildWindow(int xPosition, int yPosition, int width, int height, int processId);
+	inline int GetX() const {return this->xPosition;}
+	inline int GetY() const {return this->yPosition;}
+	inline int GetWidth() const {return this->width;}
+	inline int GetHeight() const {return this->height;}
+	inline int GetProcessId() const {return this->processId;}
 };
 
 class DesktopWindowManager
@@ -38,8 +43,9 @@ public:
 	void Run();
 
 private:
+	void renderChildren();
 	void acquireNewChildProcesses();
-	void sendBufferData();
+	void sendBufferData() const;
 };
 
 

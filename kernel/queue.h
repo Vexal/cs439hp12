@@ -14,7 +14,7 @@ public:
 		ListNode(const T& val) :
 			next(nullptr),
 			previous(nullptr),
-			value(value) {}
+			value(val) {}
 	};
 
 	ListNode* first;

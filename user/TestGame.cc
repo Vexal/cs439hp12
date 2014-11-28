@@ -7,7 +7,9 @@ extern "C" {
 int main()
 {
 	const long screenBufferId = GetScreenBuffer();
-	puts("testing background\n");
+	puts("testing background with buffer id ");
+	putdec(screenBufferId);
+	puts(".\n");
 
 	unsigned char buf[320 * 200];
 
@@ -16,5 +18,13 @@ int main()
 		buf[a] = a % 256;
 	}
 
-	WriteScreenBuffer(screenBufferId, buf);
+	//while(1)
+	{
+		if(WriteScreenBuffer(screenBufferId, buf) < 0)
+		{
+			puts("Failed to write Test Game screenbuffer.\n");
+		}
+	}
+
+	return 0;
 }
