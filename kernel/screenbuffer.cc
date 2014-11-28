@@ -14,8 +14,7 @@ ScreenBuffer::ScreenBuffer(int width, int height, unsigned int ownerProcessId, u
 
 int ScreenBuffer::GetNextChildBuffer()
 {
-	this->mutex.lock();
-	Debug::printf("asdfasdf\n");
+	//Debug::printf("asdfasdf\n");
 	if(this->bufferRequests.isEmpty())
 		return -1;
 
@@ -23,26 +22,25 @@ int ScreenBuffer::GetNextChildBuffer()
 
 	const int newId = nextBuffer->ownerProcessId;
 	int widt = nextBuffer->width;
-	Debug::printf("buffer %x process id: %d width: %d.\n", (long)nextBuffer, newId, widt);
+	//Debug::printf("buffer %x process id: %d width: %d.\n", (long)nextBuffer, newId, widt);
 	widt = nextBuffer->width;
-	Debug::printf("new width: %d.\n", widt);
+	//Debug::printf("new width: %d.\n", widt);
 	this->childBuffers.Push(nextBuffer);
-	this->mutex.unlock();
 	return newId;
 }
 
 void ScreenBuffer::AddBufferRequest(ScreenBuffer* request)
 {
-	this->mutex.lock();
+	//this->mutex.lock();
 	this->bufferRequests.addTail(request);
 	Debug::printf("just added for p: %d.\n", request->GetOwnerProcessId());
-	this->mutex.unlock();
+	//this->mutex.unlock();
 }
 
 const ScreenBuffer* const ScreenBuffer::GetChildBuffer(int processId)
 {
 	this->mutex.lock();
-	Debug::printf("About to find child buffers.\n");
+	//Debug::printf("About to find child buffers.\n");
 	List<ScreenBuffer*>::ListNode* first = this->childBuffers.GetHead();
 	if(first == nullptr)
 		return nullptr;
@@ -52,8 +50,14 @@ const ScreenBuffer* const ScreenBuffer::GetChildBuffer(int processId)
 		first = first->next;
 	}
 
-	Debug::printf("Found buffer %x with pid: %d.\n", (long)first->value, first->value->GetOwnerProcessId());
+	//Debug::printf("Found buffer %x with pid: %d.\n", (long)first->value, first->value->GetOwnerProcessId());
 	this->mutex.unlock();
 	return first->value;
+}
+
+ScreenBuffer::~ScreenBuffer()
+{
+	Debug::printf("DELETING SCREEN BUFFER!!\n\n\n\n!!!!!!!!!!");
+	delete[] this->buffer;
 }
 

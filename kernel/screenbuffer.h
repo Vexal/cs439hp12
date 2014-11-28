@@ -45,8 +45,12 @@ public:
 	const ScreenBuffer* const GetChildBuffer(int processId);
 	inline void CopyChildBuffer(int processId, unsigned char* buf) {const ScreenBuffer* const child = this->GetChildBuffer(processId); memcpy(buf, child->buffer, child->width * child->height);}
 	int GetNextChildBuffer();
-	inline int GetBufferRequestCount() {this->mutex.lock(); const int sz = this->bufferRequests.GetSize(); this->mutex.unlock(); return sz;}
+	inline int GetBufferRequestCount() {const int sz = this->bufferRequests.GetSize(); return sz;}
 	inline unsigned char* GetBuffer() const {return this->buffer;}
+	inline void Lock() {this->mutex.lock();}
+	inline void Unlock() {this->mutex.unlock();}
+
+	virtual ~ScreenBuffer();
 };
 
 

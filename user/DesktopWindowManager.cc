@@ -52,14 +52,6 @@ void DesktopWindowManager::Run()
 {
 	while(1)
 	{
-		/*for(int a = 0; a < 320; ++a)
-		{
-			for(int b = 0; b < 200; ++b)
-			{
-				this->buffer[b*320 + a] = testCount % 256;
-			}
-		}*/
-
 		this->acquireNewChildProcesses();
 		this->renderChildren();
 		this->sendBufferData();
@@ -100,18 +92,19 @@ void DesktopWindowManager::renderChildren()
 
 	while(first != nullptr)
 	{
+		//render the child window at the correct position.
 		const ChildWindow* const child = first->value;
 
-		//render the child window at the correct position.
-		puthex((long)first->value);
+		/*puthex((long)first->value);
 		puts("Attempting to render window with width: ");
 		putdec(child->GetWidth());
 		puts(" and height: ");
 		putdec(child->GetHeight());
-		puts(".\n");
+		puts(".\n");*/
+
 		unsigned char* childWindowBuffer = new unsigned char[child->GetWidth() * child->GetHeight()];
 		GetChildBuffer(childWindowBuffer, child->GetProcessId());
-		puts("Successfully copied child buffer.\n");
+		//puts("Successfully copied child buffer.\n");
 		int px = 0;
 		for(int x = child->GetX(); x < child->GetX() + child->GetWidth(); ++x)
 		{
@@ -127,7 +120,7 @@ void DesktopWindowManager::renderChildren()
 		delete[] childWindowBuffer;
 		first = first->next;
 
-		puts("Finished rendering window.\n");
+		//puts("Finished rendering window.\n");
 	}
 }
 
