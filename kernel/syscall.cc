@@ -306,11 +306,36 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		ScreenBuffer* screenBuffer = ScreenBuffer::globalBuffer;
 		if(screenBuffer == nullptr || screenBuffer->GetOwnerProcessId() != Process::current->getId())
 		{
+			Debug::printf("Fail\n");
 			return -1;
 		}
+
+		const int requestCount = screenBuffer->GetBufferRequestCount();
+
+		int* processIds = (int*)a0;
+		Debug::printf("Sending %d new process requests to window manager for result buffer %x.\n", requestCount, (long)processIds);
+		//int* processIds = new int[requestCount];
+
+		for(int a = 0; a < requestCount; ++a)
+		{
+			processIds[a] = screenBuffer->GetNextChildBuffer();
+		}
+
+		Debug::printf("Finished getting new process windows now.\n");
 	}
 
 	return 0;
+
+	case 19: //GetBufferRequestCount()
+	{
+		ScreenBuffer* screenBuffer = ScreenBuffer::globalBuffer;
+		if(screenBuffer == nullptr || screenBuffer->GetOwnerProcessId() != Process::current->getId())
+		{
+			return -1;
+		}
+
+		return screenBuffer->GetBufferRequestCount();
+	}
     default:
         Process::trace("syscall(%d,%d,%d)",num,a0,a1);
         return -1;

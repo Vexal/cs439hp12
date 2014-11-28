@@ -78,6 +78,10 @@ int main() {
         	{
         		join(id);
         	}
+        	else
+        	{
+        		puts("Running new process in background.\n");
+        	}
         }
         else
         {

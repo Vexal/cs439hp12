@@ -30,6 +30,7 @@ private:
 	unsigned char* const buffer;
 	unsigned int ownerProcessId;
 	SimpleQueue<ScreenBuffer*> bufferRequests; // a list of processes requesting to create a window
+	List<ScreenBuffer*> childBuffers;
 
 public:
 	ScreenBuffer(int width, int height, unsigned int ownerProcessId);
@@ -40,7 +41,10 @@ public:
 	inline int GetWidth() const {return this->width;}
 	inline int GetHeight() const {return this->height;}
 	inline unsigned int GetOwnerProcessId() const {return this->ownerProcessId;}
-
+	inline const ScreenBuffer* const GetChildBuffer(int processId) {List<ScreenBuffer*>::ListNode* first = this->childBuffers.GetHead(); while(first != nullptr && first->value->ownerProcessId != processId) {first = first->next;} return first->value;}
+	inline void CopyChildBuffer(int processId, unsigned char* buf) {const ScreenBuffer* const child = this->GetChildBuffer(processId); memcpy(buf, child->buffer, child->width * child->height);}
+	int GetNextChildBuffer();
+	inline int GetBufferRequestCount() const {return this->bufferRequests.GetSize();}
 };
 
 

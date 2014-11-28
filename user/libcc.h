@@ -29,6 +29,7 @@ inline void operator delete[](void* p)
 
 template<typename T> class List
 {
+public:
 	class ListNode
 	{
 	public:
@@ -44,14 +45,13 @@ template<typename T> class List
 
 	ListNode* first;
 
-public:
 	List() :
 		first(nullptr)
 	{
 
 	}
 
-	void Push(const T& v)
+	inline void Push(const T& v)
 	{
 		ListNode* newNode = new ListNode(v);
 
@@ -66,6 +66,8 @@ public:
 			this->first = newNode;
 		}
 	}
+
+	inline ListNode* GetHead() {return this->first;}
 };
 
 #endif

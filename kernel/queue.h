@@ -3,6 +3,7 @@
 
 template<typename T> class List
 {
+public:
 	class ListNode
 	{
 	public:
@@ -18,14 +19,13 @@ template<typename T> class List
 
 	ListNode* first;
 
-public:
 	List() :
 		first(nullptr)
 	{
 
 	}
 
-	void Push(const T& v)
+	inline void Push(const T& v)
 	{
 		ListNode* newNode = new ListNode(v);
 
@@ -40,6 +40,8 @@ public:
 			this->first = newNode;
 		}
 	}
+
+	inline ListNode* GetHead() {return this->first;}
 };
 
 template<typename T> class Queue {
@@ -60,9 +62,10 @@ private:
 
     Node *first;
     Node *last;
+    int size;
 public:
     virtual ~SimpleQueue(){}
-    SimpleQueue() : first(0), last(0) {}
+    SimpleQueue() : first(0), last(0), size(0) {}
     void addTail(T v) {
         Node *n = new Node();
         n->value = v;
@@ -75,6 +78,7 @@ public:
         if (first == 0) {
             first = n;
         }
+        ++size;
     }
     bool isEmpty() {
         return first == 0;
@@ -89,9 +93,15 @@ public:
         }
         T v = p->value;
         delete p;
+        --size;
         return v;
     }
     
+    int GetSize() const
+    {
+    	return this->size;
+    }
+
 };
 
 #endif

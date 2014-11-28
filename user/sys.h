@@ -19,5 +19,6 @@ extern long shutdown();
 extern long testdraw(long c);
 extern long GetScreenBuffer();
 extern long WriteScreenBuffer(long resourceId, unsigned char* buf);
-extern long GetNewWindowRequests();
+extern long GetNewWindowRequests(int* buf);
+extern long GetBufferRequestCount();
 #endif
