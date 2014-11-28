@@ -175,6 +175,14 @@ inl:
 	pop %edx
 	ret
 
+.global inw
+inw:
+	xor %eax, %eax
+	push %edx
+	mov 8(%esp), %dx
+	inw %dx, %ax
+	pop %edx
+	ret
 
 .global outl
 outl:

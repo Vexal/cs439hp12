@@ -15,6 +15,7 @@ extern "C" int eflags();
 extern "C" void pit_do_init(int divide);
 
 extern "C" int inb(int port);
+extern "C" int inw(int port);
 extern "C" int inl(int port);
 extern "C" void outb(int port, int val);
 extern "C" void outl(int port, int val);

@@ -102,23 +102,30 @@ extern "C" void pic_irq(int irq) {
     case 11:
     {
 
-        outw(0xc000 + 0x3E, 0x1); // Interrupt Status - Clears the Rx OK bit, acknowledging a packet has been received, 
-                               // and is now in rx_buffer
 
+    	Debug::printf("Received a network card interrupt.\n");
         if(netCount > 15)
         {
-            break;
+           //break;
         }
         //if(networkBuffer[0] != 0)
         //{
             for(int a = 0; a < 1000; ++a)
             {     
-                Debug::printf("%d ", networkBuffer[a]);
-                networkBuffer[a] = 0;
+            	if(networkBuffer[a] == 0)
+            	{
+            		continue;
+            	}
+
+                //Debug::printf("Packet %d is non zero: %d ", a, networkBuffer[a]);
+            	Debug::printf("%02x ", networkBuffer[a]);
+                //networkBuffer[a] = 1;
             }
 
-            ++netCount;
+           // ++netCount;
         //}
+            outw(0xc000 + 0x3E, 0x1); // Interrupt Status - Clears the Rx OK bit, acknowledging a packet has been received,
+                                           // and is now in rx_buffer
 
         Debug::printf("\n\n\n");
     }
