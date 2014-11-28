@@ -177,6 +177,14 @@ WriteScreenBuffer:
 .global GetNewWindowRequests
 GetNewWindowRequests:
 	mov $18, %eax
+	mov 4(%esp), %ecx
+	mov $0, %edx
+	int $100
+	ret
+
+.global GetBufferRequestCount
+GetBufferRequestCount:
+	mov $19, %eax
 	mov $0, %ecx
 	mov $0, %edx
 	int $100

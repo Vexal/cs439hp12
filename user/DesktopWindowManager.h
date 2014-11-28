@@ -11,8 +11,9 @@ private:
 	int width;
 	int height;
 
+	const int processId;
 public:
-	ChildWindow(int xPosition, int yPosition, int width, int height);
+	ChildWindow(int xPosition, int yPosition, int width, int height, int processId);
 };
 
 class DesktopWindowManager

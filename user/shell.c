@@ -18,6 +18,13 @@ int main() {
         	++in;
         }
 
+        int runInBackground = 0;
+        if(in[0] == '&')
+        {
+        	runInBackground = 1;
+        	++in;
+        }
+
         while(in[ind] != 0)
         {
         	while(in[ind] != 0 && in[ind] != ' ')
@@ -67,8 +74,14 @@ int main() {
 
         if(id != 0)
         {
-        	join(id);
-
+        	if(!runInBackground)
+        	{
+        		join(id);
+        	}
+        	else
+        	{
+        		puts("Running new process in background.\n");
+        	}
         }
         else
         {

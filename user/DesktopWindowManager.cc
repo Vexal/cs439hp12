@@ -60,6 +60,7 @@ void DesktopWindowManager::Run()
 			}
 		}
 
+		this->acquireNewChildProcesses();
 		this->sendBufferData();
 		++testCount;
 	}
@@ -69,7 +70,25 @@ void DesktopWindowManager::Run()
 //maybe this can be replaced later with some sort of signal from OS to window manager process.
 void DesktopWindowManager::acquireNewChildProcesses()
 {
+	const int newProcessCount = GetBufferRequestCount();
 
+	if(newProcessCount > 0)
+	{
+		puts("found new process for window: ");
+		putdec(newProcessCount);
+		puts("\n");
+		int* newProcessIds = new int[newProcessCount];
+		GetNewWindowRequests(newProcessIds);
+		for(int a = 0; a < newProcessCount; ++a)
+		{
+			puts("Initializing window for process: ");
+			putdec(newProcessIds[a]);
+			puts("\n");
+			this->childWindows.Push(new ChildWindow(30, 30, 80, 60, newProcessIds[a]));
+		}
+
+		puts("initialized new process windows.\n");
+	}
 }
 
 void DesktopWindowManager::sendBufferData()
@@ -77,6 +96,15 @@ void DesktopWindowManager::sendBufferData()
 	WriteScreenBuffer(screenBufferId, this->buffer);
 }
 
+ChildWindow::ChildWindow(int xPosition, int yPosition, int width, int height, int processId) :
+		xPosition(xPosition),
+		yPosition(yPosition),
+		width(width),
+		height(height),
+		processId(processId)
+{
+
+}
 
 
 
