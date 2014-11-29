@@ -8,70 +8,13 @@
 #include "u8250.h"
 #include "libk.h"
 #include "screenbuffer.h"
-
-unsigned char* networkBuffer = nullptr;
+#include "network.h"
 
 void Syscall::init(void) {
     IDT::addTrapHandler(100,(uint32_t)syscallTrap,3);
 }
 
-unsigned int pciConfigReadWord(unsigned char bus, unsigned char slot, unsigned
-		char func, unsigned char offset)
-{
-	unsigned int address;
-	unsigned int lbus = (unsigned int)bus;
-	unsigned int lslot = (unsigned int)slot;
-	unsigned int lfunc = (unsigned int)func;
-	unsigned short  tmp = 0;
 
-	address = (unsigned int)((lbus << 16) | (lslot << 11) | (lfunc << 8) |
-			(offset & 0xfc) | ((unsigned int)0x80000000));
-
-	outl(0xCF8, address);
-
-	//tmp = inl(0xfc);
-	tmp = (unsigned short)((inl(0xcfc) >> ((offset & 2) * 8)) & 0xFFFF);
-	return tmp;
-}
-
-void pciConfigWriteWord(unsigned char bus, unsigned char slot, unsigned
-		char func, unsigned char offset, unsigned short val)
-{
-	offset = 0x6;
-	const int sz = 0;
-	unsigned int address;
-	unsigned int lbus = (unsigned int)bus;
-	unsigned int lslot = (unsigned int)slot;
-	unsigned int lfunc = (unsigned int)func;
-	unsigned long  tmp = 0;
-
-	address = (unsigned int)((lbus << 16) | (lslot << 11) | (lfunc << 8) |
-			(offset & 0xfc) | ((unsigned int)0x80000000));
-
-	//address = (lbus << 16) | (lslot << 11) | (lfunc << 8) | offset | 0x80000000;
-	outl(0xCF8, address);
-
-	tmp = inl(0xcfc + sz);
-	Debug::printf("Read in %x\n", tmp);
-	//tmp = (unsigned short)((inl(0xcfc) >> ((offset & 2) * 8)) & 0xFFFF);
-	//return tmp;
-
-	outl(0xcfc + sz, (unsigned int)0xFFFF0107);
-
-	tmp = inl(0xcfc + sz);
-	Debug::printf("Read in %x\n", tmp);
-}
-
-unsigned short pciCheckVendor(unsigned char bus, unsigned char slot)
-{
-	unsigned short vendor;// device;
-
-	if((vendor = pciConfigReadWord(bus, slot, 0, 0)) != 0xFFFF)
-	{
-	}
-
-	return vendor;
-}
 extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 
     switch (num) {
@@ -200,55 +143,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
         }
     case 15: //test draw
 	{
-		Debug::printf("Writing %c\n", (char)a0);
-		const unsigned short vendor = pciCheckVendor(0, 3);
-		Debug::printf("The vendor id is %x\n", vendor);
-		
-		for(int a = 0; a < 128; a+=2)
-		{
-			const unsigned short BAR0 = pciConfigReadWord(0, 3, 0, a);
-		
-			 Debug::printf("The thing at %x  is %x\n", a, BAR0);
-		}	
-		pciConfigWriteWord(0, 3, 0, 0xa, 6);
-		const int ioaddr = 0xc000;
-        outb( ioaddr + 0x52, 0x0);
-
-        const long mac = inl(ioaddr);
-        Debug::printf("Found mac0-5 %x\n", mac);
-
-        outb( ioaddr + 0x37, 0x10);
-         while( (inb(ioaddr + 0x37) & 0x10) != 0) { }
-
-        const long receiveBufferAddress = inl(ioaddr + 0x30);
-        networkBuffer = new unsigned char[16000]();
-
-        outl(ioaddr + 0x30, (long)networkBuffer);
-        const long receiveBufferAddress2 = inl(ioaddr + 0x30);
-        Debug::printf("Receive buffer: %x, then after setting: %x\n", receiveBufferAddress, receiveBufferAddress2);
-
-        const long imrMask = inw(ioaddr + 0x3C);
-        outw(ioaddr + 0x3C, 0x0005);
-        const long imrMask2 = inw(ioaddr + 0x3C);
-        Debug::printf("IMR mask: %x, then after setting: %x\n", imrMask, imrMask2);
-
-        const long isrMask = inw(ioaddr + 0x3e);
-        //outw(ioaddr + 0x3E, 0x0005);
-        const long isrMask2 = inw(ioaddr + 0x3E);
-        Debug::printf("ISR mask: %x, then after setting: %x\n", isrMask, isrMask2);
-
-        const long rcvConfig =  0xf | (1 << 7);
-        const long rcvConfigInitial = inl(ioaddr + 0x44);
-        outl(ioaddr + 0x44,rcvConfig); // (1 << 7) is the WRAP bit, 0xf is AB+AM+APM+AAP
-        const long rcvConfigSet = inl(ioaddr + 0x44);
-
-        Debug::printf("Receive Config: %x, then after setting: %x\n", rcvConfigInitial, rcvConfigSet);
-
-
-        const long reAndTe = inb(ioaddr + 0x37);
-        outb(ioaddr + 0x37, 0x0C);
-        const long reAndTe2 = inb(ioaddr + 0x37);
-        Debug::printf("Receive / Transmit enable: %x, then after setting: %x\n", reAndTe, reAndTe2);
+	   Network::InitNetwork();
 	}
 	return 0;
 	
