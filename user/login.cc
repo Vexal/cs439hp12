@@ -85,4 +85,3 @@ int main() {
 // MD5 source: http://www.zedwood.com/article/cpp-md5-function
 // memcpy and memset check
 // took out overloading shortcut which takes std::string
-// print out the result before digestion and compare/figure out how to do the digestion

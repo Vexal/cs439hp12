@@ -361,9 +361,10 @@ char* MD5::hexdigest() const {
   char buf[33];
   for (int i=0; i<16; i++) {
     mysprintf(buf+i*2, "%02x", digest[i]);
+    /*
     puts("updated buf in loop is: ");
     puts(buf);
-    puts(".\n");
+    puts(".\n");*/
   }
   buf[32]=0;
   puts("buf being returned is: ");
