@@ -21,4 +21,5 @@ extern long GetScreenBuffer();
 extern long WriteScreenBuffer(long resourceId, unsigned char* buf);
 extern long GetNewWindowRequests(int* buf);
 extern long GetBufferRequestCount();
+extern long GetChildBuffer(unsigned char* buf, int processId);
 #endif

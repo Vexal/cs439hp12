@@ -2,6 +2,7 @@
 #include "machine.h"
 #include "debug.h"
 #include "process.h"
+#include "network.h"
 
 /* The pit will be programmed to generate an interrupts at
    a frequency of FREQ/divide MHz */

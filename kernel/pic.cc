@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "process.h"
 #include "kbd.h"
+#include "network.h"
 
 #define C1 0x20           /* command port for PIC1 */
 #define D1 (C1 + 1)       /* data port for PIC1 */
@@ -101,33 +102,7 @@ extern "C" void pic_irq(int irq) {
     case 4: /*com1 */ break;
     case 11:
     {
-
-
-    	Debug::printf("Received a network card interrupt.\n");
-        if(netCount > 15)
-        {
-           //break;
-        }
-        //if(networkBuffer[0] != 0)
-        //{
-            for(int a = 0; a < 1000; ++a)
-            {     
-            	if(networkBuffer[a] == 0)
-            	{
-            		continue;
-            	}
-
-                //Debug::printf("Packet %d is non zero: %d ", a, networkBuffer[a]);
-            	Debug::printf("%02x ", networkBuffer[a]);
-                //networkBuffer[a] = 1;
-            }
-
-           // ++netCount;
-        //}
-            outw(0xc000 + 0x3E, 0x1); // Interrupt Status - Clears the Rx OK bit, acknowledging a packet has been received,
-                                           // and is now in rx_buffer
-
-        Debug::printf("\n\n\n");
+        Network::KernelNetwork->HandleNetworkInterrupt();
     }
     break;
     case 15: /* ide */ break;

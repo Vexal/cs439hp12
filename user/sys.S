@@ -190,3 +190,11 @@ GetBufferRequestCount:
 	int $100
 	ret
 
+//GetChildBuffer(unsigned char* buf, int processId)
+.global GetChildBuffer
+GetChildBuffer:
+	mov $20, %eax
+	mov 4(%esp), %ecx
+	mov 8(%esp), %edx
+	int $100
+	ret
