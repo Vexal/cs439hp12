@@ -19,9 +19,13 @@ shutdown : CFILES=shutdown.c libc.c heap.c
 cat : CCFILES=
 cat : CFILES=cat.c libc.c heap.c
 
-login: CCFILES=login.cc
+login: CCFILES=login.cc md5.cc
 
 login: CFILES=libc.c heap.c
+
+md5: CCFILES=md5.cc
+
+md5: CFILES=libc.c
 
 TestProgram : CFILES=libc.c heap.c
 
