@@ -1,110 +1,186 @@
 #include "network.h"
 #include "machine.h"
-#include "debug.h"
 
 Network* Network::KernelNetwork = nullptr;
+const unsigned char Network::myMac[6] = {0x52,0x54,0x00,0x12,0x34,0x56};
 
 void Network::HandleNetworkInterrupt() 
 {
-	unsigned char interruptType = inl(ioaddr + 0x3E);
-
-	if(interruptType != 0)
-	Debug::printf("Received interrupt of type: %x from the network card.\n", interruptType);
-	if(netCount > 1)
-	{
-		this->endNetworkInterrupt();
-	   	return;
-	}
-        
-    for(int a = 0; a < 200; ++a)
-    {     
-    	Debug::printf("%02x (%03d) ", this->ReceiveBuffer[a], this->ReceiveBuffer[a]);
-    }
-
     ++this->netCount;
-    this->endNetworkInterrupt();
-    unsigned char data[64] = {0};
-    data[0] = 0x5e;
-    data[1] = 0xb4;
-    data[2] = 0x75;
-    data[3] = 0xba;
-    data[4] = 0xfa;
-    data[5] = 0x9a;
-    data[6] = 0x52;
-    data[7] = 0x54;
-    data[8] = 0x00;
-    data[9] = 0x12;
-    data[10] = 0x34;
-    data[11] = 0x56;
-    data[12] = 0x08;
-    data[13] = 0x06;
-    data[14] = 0x00;
-    data[15] = 0x01;
-    data[16] = 0x08;
-    data[17] = 0x00;
-    data[18] = 0x06;
-    data[19] = 0x04;
-    data[20] = 0x00;
-    data[21] = 0x02;
-    data[22] = 0x52;
-    data[23] = 0x54;
-    data[24] = 0x00;
-    data[25] = 0x12;
-    data[26] = 0x34;
-    data[27] = 0x56;
-    data[28] = 0xc0;
-    data[29] = 0xa8;
-    data[30] = 0x07;
-    data[31] = 0x02;
-    data[32] = 0x5e;
-    data[33] = 0xb4;
-    data[34] = 0x75;
-    data[35] = 0xba;
-    data[36] = 0xfa;
-    data[37] = 0x9a;
-    data[38] = 0xc0;
-    data[39] = 0xa8;
-    data[40] = 0x07;
-    data[41] = 0x01;
 
-    //this->sendPacket(data, 64);
-    Debug::printf("\n\n\n");
+	unsigned short interruptType = inw(ioaddr + 0x3E);
+	Debug::printf("Received interrupt of type: %x from the network card.\n", interruptType);
+
+    
+    if((interruptType & 1) > 0)
+    {
+        this->handlePacketReceiveInterrupt();
+        
+        
+    }
+    if((interruptType & 2) > 0)
+    {
+        Debug::printf("Network interrupt error: %d\n", interruptType);
+    }
+    if((interruptType & 4) > 0)
+    {
+        //handle transmission complete
+        this->endTxOKInterrupt();
+    }
 }
 
 Network::Network() :
 	netCount(0),
-	bufferPosition(0),
+	currentBufferPosition(0),
 	currentBufferIndex(0)
 {
 
 }
 
+void Network::handlePacketReceiveInterrupt()
+{
+    const unsigned short packetLength = this->getCurrentPacketLength();
+    const unsigned short realPacketLength = packetLength + 4;
+    Debug::printf("current packet length is %d\n", packetLength);
+
+    unsigned char sender[6];
+    this->getCurrentPacketSender(sender);
+    Debug::printf("sender is ");
+    for (int i = 0; i < 5; ++i) {
+        Debug::printf("%x:", sender[i]);
+    }
+    Debug::printf("%x\n", sender[5]);
+
+    const PacketType etherType = getCurrentPacketType();
+    Debug::printf("type is %x\n", etherType);
+
+    switch(etherType)
+    {
+        case PacketType::ARP:
+        {
+            Debug::printf("ARP PACKET");
+            ARPPacket request;
+            memcpy(&request, &this->ReceiveBuffer[this->currentBufferPosition + 18], 28);
+            //request.printPacket();
+
+            //this->arpCache.AddEntry(request.srcIP, request.srcMac);
+
+            unsigned char packet[42] = {0};
+            memcpy(packet, sender, 6);
+            memcpy(packet+6, myMac, 6);
+            packet[12] = 0x08;
+            packet[13] = 0x06;
+
+            ARPPacket reply;
+            memcpy(reply.hardwareType, request.hardwareType, 2);
+            memcpy(reply.protocolType, request.protocolType, 2);
+            reply.hardwareLen = request.hardwareLen;
+            reply.protocolLen = request.protocolLen;
+            reply.operationCode[0] = 0;
+            reply.operationCode[1] = 2;
+            memcpy(reply.srcMac, myMac, 6);
+            memcpy(reply.srcIP, request.destIP, 4);
+            memcpy(reply.destMac, request.srcMac, 6);
+            memcpy(reply.destIP, request.srcIP, 4);
+
+            //reply.printPacket();
+
+            memcpy(packet+14, &reply, 28);
+            //this->sendPacket(packet, 42);
+            break;
+        }
+
+        case PacketType::IPv4:
+        {
+            Debug::printf("IPV4 PACKET");
+            for(int a = 0; a < packetLength; ++a)
+            {     
+                Debug::printf("%02x (%03d) ", this->ReceiveBuffer[this->currentBufferPosition + a], 
+                    this->ReceiveBuffer[this->currentBufferPosition + a]);
+            }
+            break;
+        }
+
+
+        case PacketType::IPv6:
+        {
+            break;
+        }
+
+        case PacketType::UNKNOWN:
+        {
+            break;
+        }
+
+    }
+
+    this->currentBufferPosition+= realPacketLength;
+    Debug::printf("\n");
+    this->endRxOKInterrupt();
+}
 void Network::sendPacket(const unsigned char* data, int length)
 {
 	//hd((unsigned long)data, (unsigned long)data +100);
-  //while(1) {}
-  memcpy((void*)this->TransmitBuffer, data, length);	//copy the packet into the buffer
+    //while(1) {}
+    memcpy((void*)this->TransmitBuffer, data, length);	//copy the packet into the buffer
 
-  //set addr and size of tx buffer
- outl(ioaddr + 0x20 + 4 * currentBufferIndex,  (unsigned long)this->TransmitBuffer);
- outl(ioaddr + 0x10 + 4 * currentBufferIndex, length);
+    //set addr and size of tx buffer
+    outl(ioaddr + 0x20 + 4 * currentBufferIndex,  (unsigned long)this->TransmitBuffer);
+    outl(ioaddr + 0x10 + 4 * currentBufferIndex, length);
 
-  currentBufferIndex++;
-  currentBufferIndex %= 4;
+    currentBufferIndex++;
+    currentBufferIndex %= 4;
 }
 
 //Retrieves the length of the packet currently
 //pointed to by bufferPosition.
-long Network::getCurrentPacketLength() const
+unsigned short Network::getCurrentPacketLength() const
 {
-
+    return *((short *) (this->ReceiveBuffer + this->currentBufferPosition + 2));
 }
 
-void Network::endNetworkInterrupt()
+//Retrieves the sender of the packet currently
+//pointed to by bufferPosition.
+void Network::getCurrentPacketSender(unsigned char sender[6])
+{
+    for (int i = 0; i < 6; ++i) {
+        sender[i] = this->ReceiveBuffer[this->currentBufferPosition + i + 10];
+    }
+}
+
+//Retrieves the sender of the packet currently
+//pointed to by bufferPosition.
+PacketType Network::getCurrentPacketType() const
+{
+    const unsigned char firstByte = this->ReceiveBuffer[this->currentBufferPosition + 16];
+    const unsigned char secondByte = this->ReceiveBuffer[this->currentBufferPosition + 17];
+    const unsigned short type =  (firstByte << 8) + secondByte;
+
+    switch(type)
+    {
+        case 0x0806:
+            return PacketType::ARP;
+        case 0x0800:
+            return PacketType::IPv4;
+        case 0x86dd:
+            return PacketType::IPv6;
+    }
+
+    return PacketType::UNKNOWN;
+}
+
+void Network::endRxOKInterrupt()
 {
 	 // Interrupt Status - Clears the Rx OK bit, acknowledging a packet has been received,
      // and is now in rx_buffer
 	outw(ioaddr + 0x3E, 0x1);
+}
+
+void Network::endTxOKInterrupt()
+{
+     // Interrupt Status - Clears the Tx OWN bit, acknowledging a packet has been transmitted
+    outl(ioaddr + 0x10, 0x0);
+    outw(ioaddr + 0x3E, 0x4);
 }
 
 void Network::Init()
@@ -163,55 +239,6 @@ void Network::Init()
     const long reAndTe2 = inb(ioaddr + 0x37);
     Debug::printf("Receive / Transmit enable: %x, then after setting: %x\n", reAndTe, reAndTe2);
 
-    unsigned char data[64] = {0xAA};
-    for(int a = 0; a < 64; ++a)
-    {
-    	data[a] = a % 16;
-    }
-    data[0] = 0x5e;
-    data[1] = 0xb4;
-    data[2] = 0x75;
-    data[3] = 0xba;
-    data[4] = 0xfa;
-    data[5] = 0x9a;
-    data[6] = 0x52;
-    data[7] = 0x54;
-    data[8] = 0x00;
-    data[9] = 0x12;
-    data[10] = 0x34;
-    data[11] = 0x56;
-    data[12] = 0x08;
-    data[13] = 0x06;
-    data[14] = 0x00;
-    data[15] = 0x01;
-    data[16] = 0x08;
-    data[17] = 0x00;
-    data[18] = 0x06;
-    data[19] = 0x04;
-    data[20] = 0x00;
-    data[21] = 0x02;
-    data[22] = 0x52;
-    data[23] = 0x54;
-    data[24] = 0x00;
-    data[25] = 0x12;
-    data[26] = 0x34;
-    data[27] = 0x56;
-    data[28] = 0xc0;
-    data[29] = 0xa8;
-    data[30] = 0x07;
-    data[31] = 0x02;
-    data[32] = 0x5e;
-    data[33] = 0xb4;
-    data[34] = 0x75;
-    data[35] = 0xba;
-    data[36] = 0xfa;
-    data[37] = 0x9a;
-    data[38] = 0xc0;
-    data[39] = 0xa8;
-    data[40] = 0x07;
-    data[41] = 0x01;
-
-    this->sendPacket(data, 64);
 }
 
 void Network::InitNetwork()
