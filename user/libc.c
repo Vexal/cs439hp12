@@ -39,6 +39,20 @@ void puthex(long v) {
     }
 }
 
+// returns a string of two chars that represent a hex number
+void gethex(char* buf, long v) {
+    char c;
+    int limit = sizeof(long) * 2;
+    for (int i = 0; i < limit - 2; i++) {
+        v = v << 4;
+    }
+    c = hexDigits[(v & 0xf0000000) >> 28];
+    buf[0] = c;
+    v = v << 4;
+    c = hexDigits[(v & 0xf0000000) >> 28];
+    buf[1] = c;
+}
+
 void putdec(unsigned long v) {
     if (v >= 10) {
         putdec(v / 10);
