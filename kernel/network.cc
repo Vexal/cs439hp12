@@ -189,7 +189,7 @@ void Network::resplondToEchoRequest()
 	memcpy(buffer + 6, this->currentBuffer() + 4, 6);
 
 	//set type to response.
-	buffer[18 + sizeof(IPv4Header)] = 0;
+	buffer[14 + sizeof(IPv4Header)] = 0;
 
 	//switch ipv4 dest and src.
 	memcpy(buffer + 26, this->currentBuffer() + 30 + 4, 4);
