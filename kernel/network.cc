@@ -97,7 +97,7 @@ void Network::handlePacketReceiveInterrupt()
 
             case PacketType::IPv4:
             {
-                Debug::printf("IPV4 PACKET");
+                Debug::printf("IPV4 PACKET\n");
                 IPv4Header ipv4Header;
                 memcpy(&ipv4Header, rcvBuffer + 18, sizeof(IPv4Header));
                 /*for(int a = 0; a < packetLength; ++a)
@@ -125,6 +125,7 @@ void Network::handlePacketReceiveInterrupt()
 						case 8:
 						{
 							Debug::printf("Received ICMP echo request.\n");
+							this->resplondToEchoRequest();
 							break;
 						}
 						}
@@ -175,6 +176,26 @@ void Network::sendPacket(const unsigned char* data, int length)
 
     currentBufferIndex++;
     currentBufferIndex %= 4;
+}
+
+void Network::resplondToEchoRequest()
+{
+	const int len = this->getCurrentPacketLength() - 4;
+	unsigned char* buffer = new unsigned char[len];
+	memcpy(buffer, this->currentBuffer(), len);
+
+	//switch dest and src.
+	memcpy(buffer, this->currentBuffer() + 10, 6);
+	memcpy(buffer + 6, this->currentBuffer() + 4, 6);
+
+	//set type to response.
+	buffer[18 + sizeof(IPv4Header)] = 0;
+
+	//switch ipv4 dest and src.
+	memcpy(buffer + 26, this->currentBuffer() + 30 + 4, 4);
+	memcpy(buffer + 30, this->currentBuffer() + 26 + 4, 4);
+
+	this->sendPacket(buffer, len);
 }
 
 bool Network::isCurrentPacketForUs() const

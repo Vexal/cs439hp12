@@ -30,23 +30,23 @@ struct ARPPacket
 	unsigned char destIP[4];
 
 	void printPacket() {
-		Debug::printf("Hardware type is %x%x\n", hardwareType[0], hardwareType[1]);
-		Debug::printf("Protocol type is %x%x\n", protocolType[0], protocolType[1]);
-		Debug::printf("MAC length is %d IP length is %d\n", hardwareLen, protocolLen);
-		Debug::printf("Operation code is %x%x\n", operationCode[0], operationCode[1]);
-		Debug::printf("Source MAC is ");
+		Debug::printf(" Hardware type is %x%x\n", hardwareType[0], hardwareType[1]);
+		Debug::printf(" Protocol type is %x%x\n", protocolType[0], protocolType[1]);
+		Debug::printf(" MAC length is %d IP length is %d\n", hardwareLen, protocolLen);
+		Debug::printf(" Operation code is %x%x\n", operationCode[0], operationCode[1]);
+		Debug::printf(" Source MAC is ");
 		for (int i = 0; i < 5; ++i)
 			Debug::printf("%x:", srcMac[i]);
 		Debug::printf("%x\n", srcMac[5]);
-		Debug::printf("Source IP is ");
+		Debug::printf(" Source IP is ");
 		for (int i = 0; i < 3; ++i)
 			Debug::printf("%d:", srcIP[i]);
 		Debug::printf("%d\n", srcIP[3]);
-		Debug::printf("Target MAC is ");
+		Debug::printf(" Target MAC is ");
 		for (int i = 0; i < 5; ++i)
 			Debug::printf("%x:", destMac[i]);
 		Debug::printf("%x\n", destMac[5]);
-		Debug::printf("Target IP is ");
+		Debug::printf(" Target IP is ");
 		for (int i = 0; i < 3; ++i)
 			Debug::printf("%d:", destIP[i]);
 		Debug::printf("%d\n\n", destIP[3]);
@@ -78,10 +78,10 @@ struct IPv4Header
 
 	inline void print()
 	{
-		Debug::printf("IPv4header:\nTotal length: %x%x\n", totalLength[0], totalLength[1]);
-		Debug::printf("Protocol: Protocol: %x\n", protocol);
-		Debug::printf("Source IP: %d.%d.%d.%d\n", sourceIPAddress[0], sourceIPAddress[1], sourceIPAddress[2], sourceIPAddress[3]);
-		Debug::printf("Destination IP: %d.%d.%d.%d\n", destinationIPAddress[0], destinationIPAddress[1], destinationIPAddress[2], destinationIPAddress[3]);
+		Debug::printf("IPv4header:\n Total length: %x%x\n", totalLength[0], totalLength[1]);
+		Debug::printf(" Protocol: %x\n", protocol);
+		Debug::printf(" Source IP: %d.%d.%d.%d\n", sourceIPAddress[0], sourceIPAddress[1], sourceIPAddress[2], sourceIPAddress[3]);
+		Debug::printf(" Destination IP: %d.%d.%d.%d\n", destinationIPAddress[0], destinationIPAddress[1], destinationIPAddress[2], destinationIPAddress[3]);
 	}
 };
 
@@ -95,8 +95,8 @@ struct ICMPHeader
 	inline void print()
 	{
 		Debug::printf("ICMP Header:\n");
-		Debug::printf("Type: %d\n", type);
-		Debug::printf("Code: %d\n", code);
+		Debug::printf(" Type: %d\n", type);
+		Debug::printf(" Code: %d\n", code);
 	}
 };
 
@@ -128,6 +128,8 @@ private:
 	void sendPacket(const unsigned char* data, int length);
 	void handlePacketReceiveInterrupt();
 	bool isCurrentPacketForUs() const;
+	void resplondToEchoRequest();
+	unsigned char* currentBuffer() {return this->ReceiveBuffer + this->currentBufferPosition;}
 
 public:
 	static void InitNetwork();
