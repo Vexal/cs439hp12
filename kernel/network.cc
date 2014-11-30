@@ -15,8 +15,6 @@ void Network::HandleNetworkInterrupt()
     if((interruptType & 1) > 0)
     {
         this->handlePacketReceiveInterrupt();
-        
-        
     }
     if((interruptType & 2) > 0)
     {
@@ -44,6 +42,7 @@ Network::Network() :
 
 void Network::handlePacketReceiveInterrupt()
 {
+	const unsigned char* const rcvBuffer = this->ReceiveBuffer + this->currentBufferPosition;
     const unsigned short packetLength = this->getCurrentPacketLength();
     const unsigned short realPacketLength = packetLength + 4;
     const PacketType etherType = getCurrentPacketType();
@@ -99,10 +98,38 @@ void Network::handlePacketReceiveInterrupt()
             case PacketType::IPv4:
             {
                 Debug::printf("IPV4 PACKET");
-                for(int a = 0; a < packetLength; ++a)
+                IPv4Header ipv4Header;
+                memcpy(&ipv4Header, rcvBuffer + 18, sizeof(IPv4Header));
+                /*for(int a = 0; a < packetLength; ++a)
                 {     
-                    Debug::printf("%d: %02x (%03d) \n", a, this->ReceiveBuffer[this->currentBufferPosition + a],
-                        this->ReceiveBuffer[this->currentBufferPosition + a]);
+                    Debug::printf("%d: %02x (%03d) \n", a, rcvBuffer[a],
+                    		rcvBuffer[a]);
+                }*/
+                ipv4Header.print();
+
+                switch(ipv4Header.protocol)
+                {
+					case 1: //ICMP
+					{
+						Debug::printf("Received ICMP packet.\n");
+						ICMPHeader icmpHeader;
+						memcpy(&icmpHeader, rcvBuffer + 18 + sizeof(IPv4Header), sizeof(ICMPHeader));
+						icmpHeader.print();
+						switch(icmpHeader.type)
+						{
+						case 0:
+						{
+							Debug::printf("Received ICMP echo reply.\n");
+							break;
+						}
+						case 8:
+						{
+							Debug::printf("Received ICMP echo request.\n");
+							break;
+						}
+						}
+					}
+					break;
                 }
                 break;
             }
@@ -123,12 +150,12 @@ void Network::handlePacketReceiveInterrupt()
     else
     {
         Debug::printf("Found somebody else's packet: %x %x %x %x %x %x\n",
-        		this->ReceiveBuffer[this->currentBufferPosition + 4],
-				this->ReceiveBuffer[this->currentBufferPosition + 5],
-				this->ReceiveBuffer[this->currentBufferPosition + 6],
-				this->ReceiveBuffer[this->currentBufferPosition + 7],
-				this->ReceiveBuffer[this->currentBufferPosition + 8],
-				this->ReceiveBuffer[this->currentBufferPosition + 9]);
+        		rcvBuffer[4],
+        		rcvBuffer[5],
+        		rcvBuffer[6],
+        		rcvBuffer[7],
+        		rcvBuffer[8],
+        		rcvBuffer[9]);
     }
 
     this->currentBufferPosition+= realPacketLength;

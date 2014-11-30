@@ -63,6 +63,43 @@ private:
 	int count;
 };
 
+struct IPv4Header
+{
+	unsigned char versionIHL;
+	unsigned char DSCPECN;
+	unsigned char totalLength[2];
+	unsigned char identification[2];
+	unsigned char flagsFOffst[2];
+	unsigned char timeToLive;
+	unsigned char protocol;
+	unsigned char headerChecksum[2];
+	unsigned char sourceIPAddress[4];
+	unsigned char destinationIPAddress[4];
+
+	inline void print()
+	{
+		Debug::printf("IPv4header:\nTotal length: %x%x\n", totalLength[0], totalLength[1]);
+		Debug::printf("Protocol: Protocol: %x\n", protocol);
+		Debug::printf("Source IP: %d.%d.%d.%d\n", sourceIPAddress[0], sourceIPAddress[1], sourceIPAddress[2], sourceIPAddress[3]);
+		Debug::printf("Destination IP: %d.%d.%d.%d\n", destinationIPAddress[0], destinationIPAddress[1], destinationIPAddress[2], destinationIPAddress[3]);
+	}
+};
+
+struct ICMPHeader
+{
+	unsigned char type;
+	unsigned char code;
+	unsigned char checksum[2];
+	unsigned char restOfHeader[4];
+
+	inline void print()
+	{
+		Debug::printf("ICMP Header:\n");
+		Debug::printf("Type: %d\n", type);
+		Debug::printf("Code: %d\n", code);
+	}
+};
+
 class Network
 {
 public:
@@ -98,7 +135,7 @@ public:
 		char func, unsigned char offset);
 	static void pciConfigWriteWord(unsigned char bus, unsigned char slot, unsigned
 		char func, unsigned char offset, unsigned short val);
-	static unsigned short pciCheckVendor(unsigned char bus, unsigned char slot);   
+	static unsigned short pciCheckVendor(unsigned char bus, unsigned char slot);
 };
 
 #endif
