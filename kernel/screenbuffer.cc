@@ -22,9 +22,9 @@ int ScreenBuffer::GetNextChildBuffer()
 
 	const int newId = nextBuffer->ownerProcessId;
 	int widt = nextBuffer->width;
-	//Debug::printf("buffer %x process id: %d width: %d.\n", (long)nextBuffer, newId, widt);
+	Debug::printf("buffer %x process id: %d width: %d.\n", (long)nextBuffer, newId, widt);
 	widt = nextBuffer->width;
-	//Debug::printf("new width: %d.\n", widt);
+	Debug::printf("new width: %d.\n", widt);
 	this->childBuffers.Push(nextBuffer);
 	return newId;
 }
@@ -37,9 +37,8 @@ void ScreenBuffer::AddBufferRequest(ScreenBuffer* request)
 	//this->mutex.unlock();
 }
 
-const ScreenBuffer* const ScreenBuffer::GetChildBuffer(int processId)
+ ScreenBuffer* ScreenBuffer::GetChildBuffer(int processId)
 {
-	this->mutex.lock();
 	//Debug::printf("About to find child buffers.\n");
 	List<ScreenBuffer*>::ListNode* first = this->childBuffers.GetHead();
 	if(first == nullptr)
@@ -51,7 +50,6 @@ const ScreenBuffer* const ScreenBuffer::GetChildBuffer(int processId)
 	}
 
 	//Debug::printf("Found buffer %x with pid: %d.\n", (long)first->value, first->value->GetOwnerProcessId());
-	this->mutex.unlock();
 	return first->value;
 }
 

@@ -20,10 +20,10 @@ DesktopWindowManager::DesktopWindowManager(unsigned int width, unsigned int heig
 	height(height),
 	buffer(new unsigned char[width * height]),
 	testCount(0),
-	defaultChildX(0),
-	defaultChildY(0),
+	defaultChildX(30),
+	defaultChildY(30),
 	defaultChildWidth(80),
-	defaultChildHeight(50)
+	defaultChildHeight(60)
 
 {
 
@@ -52,10 +52,13 @@ void DesktopWindowManager::Run()
 {
 	while(1)
 	{
+		Sleep(1000);
+		puts("rendering.\n");
+		LockScreenBuffer(this->screenBufferId);
 		this->acquireNewChildProcesses();
 		this->renderChildren();
 		this->sendBufferData();
-		++testCount;
+		UnlockScreenBuffer(this->screenBufferId);
 	}
 }
 
@@ -75,11 +78,14 @@ void DesktopWindowManager::acquireNewChildProcesses()
 		for(int a = 0; a < newProcessCount; ++a)
 		{
 			puts("Initializing window for process: ");
-			putdec(newProcessIds[a]);
-			ChildWindow* newWindow = new ChildWindow(30, 30, 80, 60, newProcessIds[a]);
-			this->childWindows.Push(newWindow);
-			puthex((long)this->childWindows.first->value);
+			const int newId = newProcessIds[a];
+			putdec(newId);
 			puts("\n");
+			ChildWindow* newWindow = new ChildWindow(this->defaultChildX, this->defaultChildY, 80, 60, newId);
+			this->defaultChildX += 85;
+			this->defaultChildY += 5;
+			this->childWindows.Push(newWindow);
+			//puthex((long)this->childWindows.first->value);
 		}
 
 		puts("initialized new process windows.\n");
@@ -92,11 +98,12 @@ void DesktopWindowManager::renderChildren()
 
 	while(first != nullptr)
 	{
+
 		//render the child window at the correct position.
 		const ChildWindow* const child = first->value;
 
-		/*puthex((long)first->value);
-		puts("Attempting to render window with width: ");
+		/*puthex((long)first->value);*/
+		/*puts("Attempting to render window with width: ");
 		putdec(child->GetWidth());
 		puts(" and height: ");
 		putdec(child->GetHeight());
@@ -108,7 +115,9 @@ void DesktopWindowManager::renderChildren()
 		int px = 0;
 		for(int x = child->GetX(); x < child->GetX() + child->GetWidth(); ++x)
 		{
-			for(int y = child->GetY(); y < child->GetY() + child->GetHeight(); ++y)
+			if(x >= this->width)
+				continue;
+			for(int y = child->GetY(); y < child->GetY() + child->GetHeight() ; ++y)
 			{
 				const int pixelLocation = x + this->width * y;
 				this->buffer[pixelLocation] = childWindowBuffer[px];

@@ -198,3 +198,27 @@ GetChildBuffer:
 	mov 8(%esp), %edx
 	int $100
 	ret
+
+.global LockScreenBuffer
+LockScreenBuffer:
+	mov $21, %eax
+	mov 4(%esp), %ecx
+	mov $0, %edx
+	int $100
+	ret
+
+.global UnlockScreenBuffer
+UnlockScreenBuffer:
+	mov $22, %eax
+	mov 4(%esp), %ecx
+	mov $0, %edx
+	int $100
+	ret
+
+.global Sleep
+Sleep:
+	mov $23, %eax
+	mov 4(%esp), %ecx
+	mov $0, %edx
+	int $100
+	ret
