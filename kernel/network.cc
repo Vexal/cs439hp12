@@ -182,7 +182,7 @@ void Network::resplondToEchoRequest()
 {
 	const int len = this->getCurrentPacketLength() - 4;
 	unsigned char* buffer = new unsigned char[len];
-	memcpy(buffer, this->currentBuffer(), len);
+	memcpy(buffer, this->currentBuffer() + 4, len);
 
 	//switch dest and src.
 	memcpy(buffer, this->currentBuffer() + 10, 6);
