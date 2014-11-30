@@ -32,14 +32,11 @@ documentation and/or software.
  
 /* interface header */
 #include "md5.h"
+#include "libcc.h"
 
 // forward declaration of helper methods
 void set(void* ptr, int value, unsigned int size );
 void copy(void* dest, const void* source, unsigned int size);
-int strcpy(char* dest, const char* src);
-void mysprintf(char *out, const char *fmt, ...);
-char* intToHex(unsigned num);
-char* intToDec(int num);
  
 // Constants for MD5Transform routine.
 #define S11 7
@@ -333,9 +330,9 @@ MD5& MD5::finalize()
   return *this;
 }
 
-/* 
+
 //////////////////////////////
- 
+/* 
 // return hex representation of digest as string
 std::string MD5::hexdigest() const
 {
@@ -351,26 +348,12 @@ std::string MD5::hexdigest() const
 }*/
   
 char* MD5::hexdigest() const {
-  puts("in hexdigest!\n");
   if (!finalized) return nullptr;
-    //return "";
-  char *temp = (char*)digest;
-  puts("temp is: ");
-  puts(temp);
-  puts("\n");
-  char buf[33];
+  char* buf = new char[33];
   for (int i=0; i<16; i++) {
-    mysprintf(buf+i*2, "%02x", digest[i]);
-    /*
-    puts("updated buf in loop is: ");
-    puts(buf);
-    puts(".\n");*/
+    gethex(buf+i*2, (unsigned int)digest[i]);
   }
   buf[32]=0;
-  puts("buf being returned is: ");
-  puts(buf);
-  puts(".\n");
-  //return std::string(buf);
   return buf;
 } 
 
@@ -397,163 +380,18 @@ std::string md5(const std::string str)
 
 // Helper methods for MD5
 
-void mysprintf(char *out, const char *fmt, ...) {
-  void* arg = &fmt;
-  arg += sizeof(fmt);
-  while(*fmt)
-  {
-    if(*fmt == '%')
-    {
-      switch (*++fmt)
-      {
-        case 'c':
-          *out =(char) *((int*)arg);
-          arg += sizeof(int);
-          break;
-        case 'x':
-          {
-            int k = strcpy(out,intToHex(*((int*)arg)));
-            out += k-1;
-            arg += sizeof(int);
-          }
-          break;
-        case 'd':
-          {
-            int k = strcpy(out,intToDec(*((int*)arg)));
-            out += k-1;
-            arg += sizeof(int);
-          }
-          break;
-      }
-    }
-    else
-    {
-      *out = *fmt;
-    }
-    out++;
-    fmt++;
-  }
-  *out='\0';
-}
- 
-char* intToDec(int num)
-{
-  int val = num;
-  int digits = 0;
-  static char dec[16];
-  if(num == 0)
-  {
-    dec[0]= '0';
-    dec[1] = '\0';
-    return dec;
-  }
- 
-  while(val)
-  {
-    val /= 10;
-    digits++;
-  }
-  int i = 0;
-  if(num < 0)
-  {
-    dec[0]='-';
-    i=1;
-    num *= -1;
-  }
-  val = num;
-  dec[i+digits]='\0';
-  while(val)
-  {
-    dec[i+digits-1] = val % 10 + '0';
-    digits--;
-    val /=10;
-  }
-  return dec;
-}
- 
- 
-char* intToHex(unsigned num)
-{
-  unsigned flag = 0xf << 28;
-  int shift = 28;
-  static char hex[16];
-  if(num == 0)
-  {
-    hex[0]='0';
-    hex[1] = '\0';
-    return hex;
-  }
-  while((flag & num) == 0)
-  {
-    flag >>= 4;
-  }
-  int i = 0;
-  while(flag)
-  {
-    unsigned val = flag & num;
-    val >>= shift;
-    if(val <= 9 && val >= 0)
-      hex[i] = val + '0';
-    else if(val > 9 && val <= 15)
-      hex[i] = val - 10 + 'a'; 
-    else
-    {
-      puts("invalid number ");
-      putdec(val);
-      puts("\n");
-      //printf("invalid number %d\n",val);
-      return "";
-    }
-    i++;
-    shift -=4;
-    flag >>= 4;
-  }
-  hex[i] = '\0';
-  return hex;
- 
-} 
-int strcpy(char* dest, const char* src)
-{
-  int i = 0;
-  while(*src)
-  {
-    *dest++=*src++;
-    i++;
-  }
-  *dest = '\0';
-  return i;
-}
-
 void copy(void* dest, const void* source, unsigned int size) {
-  puts("in copy, source is: ");
-  char *forprint = (char*) source;
-  puts(forprint);
-  puts(", size is: ");
-  putdec(size);
-
   char* dest_add = (char*) dest;
   char* source_add = (char*) source;
   for (unsigned int i = 0; i < size; i++) {
     dest_add[i] = source_add[i];
   }
-  puts(", and dest is: ");
-  char* forprintagain = (char*) dest;
-  puts(forprintagain);
-  puts(".\n");
 }
 
 void set(void* ptr, int value, unsigned int size ) {
-  puts("in set, source is: ");
-  char *forprint = (char*) ptr;
-  puts(forprint);
-  
   unsigned char fill_value = value;
   char* dest_add = (char*) ptr;
   for (unsigned int i = 0; i < size; i++) {
     dest_add[i] = fill_value;
   }
-  puts(", and finished with: ");
-  char* forprintagain = (char*) ptr;
-  puts(forprintagain);
-  puts(".\n");
 }

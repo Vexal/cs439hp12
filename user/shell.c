@@ -6,9 +6,12 @@ void notFound(char* cmd) {
 }
 
 int main() {
+    int firstRun = 1;
     while (1) {
+
         puts("shell> ");
-        char* in = gets();
+        char* in = firstRun ? "login" : gets();
+        firstRun = 0;
         int ind = 0;
         int argc = 0;
         char** args;

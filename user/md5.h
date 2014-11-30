@@ -93,6 +93,5 @@ private:
 };
  
 //std::string md5(const std::string str);
-// mine: char* md5(const char* str);
 
 #endif

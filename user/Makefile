@@ -25,7 +25,7 @@ login: CFILES=libc.c heap.c
 
 md5: CCFILES=md5.cc
 
-md5: CFILES=libc.c
+md5: CFILES=libc.c heap.c
 
 TestProgram : CFILES=libc.c heap.c
 

@@ -10,6 +10,7 @@ extern void free(void*);
 extern void* realloc(void* ptr, long newSize);
 extern void putdec(unsigned long v);
 extern void puthex(long v);
+extern void gethex(char* buf, long v);
 extern long readFully(long fd, void* buf, long length);
 
 void memset(void* p, int val, long sz);
