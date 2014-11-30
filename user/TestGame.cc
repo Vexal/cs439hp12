@@ -25,7 +25,7 @@ int main()
 		//puts("attemping to lock buffer for writing: ");
 		//putdec(screenBufferId);
 		LockScreenBuffer(screenBufferId);
-		puts(" ...done.\n");
+		//puts(" ...done.\n");
 		if(WriteScreenBuffer(screenBufferId, buf) < 0)
 		{
 			puts("Failed to write Test Game screenbuffer.\n");
