@@ -14,8 +14,10 @@ int main() {
 		char fileName[16];
 		read(fileHandle, fileName, 16);
 		fileName[12] = 0;
-		puts(fileName);
-		puts("\n");
+		if (fileName[0] != '.') {
+			puts(fileName);
+			puts("\n");		
+		}
 	}
     return 0;
 }

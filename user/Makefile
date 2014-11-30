@@ -1,4 +1,4 @@
-PROGS = shell ls shutdown echo cat TestProgram login TestGame
+PROGS = shell ls shutdown echo cat TestProgram login TestGame .grace
 
 all : $(PROGS)
 
@@ -19,20 +19,19 @@ shutdown : CFILES=shutdown.c libc.c heap.c
 cat : CCFILES=
 cat : CFILES=cat.c libc.c heap.c
 
-login: CCFILES=login.cc md5.cc
+login : CCFILES=login.cc md5.cc
+login : CFILES=libc.c heap.c
 
-login: CFILES=libc.c heap.c
+md5 : CCFILES=md5.cc
+md5 : CFILES=libc.c heap.c
 
-md5: CCFILES=md5.cc
-
-md5: CFILES=libc.c heap.c
+.grace : CCFILES=grace.cc
+.grace : CFILES=libc.c heap.c
 
 TestProgram : CFILES=libc.c heap.c
-
 TestProgram : CCFILES=TestProgram.cc DesktopWindowManager.cc
 
 TestGame : CFILES=libc.c heap.c
-
 TestGame : CCFILES=TestGame.cc
 
 $(PROGS) : % : Makefile $(OFILES)
