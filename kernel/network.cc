@@ -27,6 +27,11 @@ void Network::HandleNetworkInterrupt()
         //handle transmission complete
         this->endTxOKInterrupt();
     }
+    if((interruptType & 16) > 0)
+    {
+    	//buffer full.
+    	Debug::printf("Our network buffer is full.\n");
+    }
 }
 
 Network::Network() :
@@ -41,6 +46,7 @@ void Network::handlePacketReceiveInterrupt()
 {
     const unsigned short packetLength = this->getCurrentPacketLength();
     const unsigned short realPacketLength = packetLength + 4;
+    const PacketType etherType = getCurrentPacketType();
     if(this->isCurrentPacketForUs())    
     {
         Debug::printf("current packet length is %d\n", packetLength);
@@ -52,8 +58,7 @@ void Network::handlePacketReceiveInterrupt()
         }
         Debug::printf("%x\n", sender[5]);
 
-        const PacketType etherType = getCurrentPacketType();
-        Debug::printf("type is %x\n", etherType);
+        //Debug::printf("type is %x\n", etherType);
 
         switch(etherType)
         {
@@ -96,31 +101,39 @@ void Network::handlePacketReceiveInterrupt()
                 Debug::printf("IPV4 PACKET");
                 for(int a = 0; a < packetLength; ++a)
                 {     
-                    Debug::printf("%02x (%03d) ", this->ReceiveBuffer[this->currentBufferPosition + a], 
+                    Debug::printf("%d: %02x (%03d) \n", a, this->ReceiveBuffer[this->currentBufferPosition + a],
                         this->ReceiveBuffer[this->currentBufferPosition + a]);
                 }
                 break;
             }
 
-
             case PacketType::IPv6:
             {
+            	Debug::printf("IPV6 PACKET");
                 break;
             }
 
             case PacketType::UNKNOWN:
             {
+            	Debug::printf("UNKNOWN PACKET TYPE.");
                 break;
             }
         }
     }
     else
     {
-        Debug::printf("Found somebody else's packet.\n");
+        Debug::printf("Found somebody else's packet: %x %x %x %x %x %x\n",
+        		this->ReceiveBuffer[this->currentBufferPosition + 4],
+				this->ReceiveBuffer[this->currentBufferPosition + 5],
+				this->ReceiveBuffer[this->currentBufferPosition + 6],
+				this->ReceiveBuffer[this->currentBufferPosition + 7],
+				this->ReceiveBuffer[this->currentBufferPosition + 8],
+				this->ReceiveBuffer[this->currentBufferPosition + 9]);
     }
 
     this->currentBufferPosition+= realPacketLength;
-    Debug::printf("\n");
+    this->currentBufferPosition = (this->currentBufferPosition + 3) & ~0x3;
+    Debug::printf("\nCurrent network receive buffer position: %d\n", this->currentBufferPosition);
     this->endRxOKInterrupt();
 }
 void Network::sendPacket(const unsigned char* data, int length)
@@ -142,7 +155,7 @@ bool Network::isCurrentPacketForUs() const
     int i = 0;
     for (; i < 6; ++i) 
     {
-        Debug::printf("Checking rcv %x vs our %x\n", this->ReceiveBuffer[this->currentBufferPosition + i + 4], myMac[i]);
+        //Debug::printf("Checking rcv %x vs our %x\n", this->ReceiveBuffer[this->currentBufferPosition + i + 4], myMac[i]);
         if(this->ReceiveBuffer[this->currentBufferPosition + i + 4] != myMac[i])
         {      
             break;
@@ -155,7 +168,7 @@ bool Network::isCurrentPacketForUs() const
     i = 0;
     for (; i < 6; ++i) 
     {
-        Debug::printf("Checking rcv %x vs broadcast %x\n", this->ReceiveBuffer[this->currentBufferPosition + i + 4], 0xff);
+        //Debug::printf("Checking rcv %x vs broadcast %x\n", this->ReceiveBuffer[this->currentBufferPosition + i + 4], 0xff);
         if(this->ReceiveBuffer[this->currentBufferPosition + i + 4] != 0xFF)
         {
             break;
