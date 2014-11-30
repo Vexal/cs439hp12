@@ -41,77 +41,82 @@ void Network::handlePacketReceiveInterrupt()
 {
     const unsigned short packetLength = this->getCurrentPacketLength();
     const unsigned short realPacketLength = packetLength + 4;
-    Debug::printf("current packet length is %d\n", packetLength);
-
-    unsigned char sender[6];
-    this->getCurrentPacketSender(sender);
-    Debug::printf("sender is ");
-    for (int i = 0; i < 5; ++i) {
-        Debug::printf("%x:", sender[i]);
-    }
-    Debug::printf("%x\n", sender[5]);
-
-    const PacketType etherType = getCurrentPacketType();
-    Debug::printf("type is %x\n", etherType);
-
-    switch(etherType)
+    if(this->isCurrentPacketForUs())    
     {
-        case PacketType::ARP:
-        {
-            Debug::printf("ARP PACKET");
-            ARPPacket request;
-            memcpy(&request, &this->ReceiveBuffer[this->currentBufferPosition + 18], 28);
-            //request.printPacket();
-
-            //this->arpCache.AddEntry(request.srcIP, request.srcMac);
-
-            unsigned char packet[42] = {0};
-            memcpy(packet, sender, 6);
-            memcpy(packet+6, myMac, 6);
-            packet[12] = 0x08;
-            packet[13] = 0x06;
-
-            ARPPacket reply;
-            memcpy(reply.hardwareType, request.hardwareType, 2);
-            memcpy(reply.protocolType, request.protocolType, 2);
-            reply.hardwareLen = request.hardwareLen;
-            reply.protocolLen = request.protocolLen;
-            reply.operationCode[0] = 0;
-            reply.operationCode[1] = 2;
-            memcpy(reply.srcMac, myMac, 6);
-            memcpy(reply.srcIP, request.destIP, 4);
-            memcpy(reply.destMac, request.srcMac, 6);
-            memcpy(reply.destIP, request.srcIP, 4);
-
-            //reply.printPacket();
-
-            memcpy(packet+14, &reply, 28);
-            //this->sendPacket(packet, 42);
-            break;
+        Debug::printf("current packet length is %d\n", packetLength);
+        unsigned char sender[6];
+        this->getCurrentPacketSender(sender);
+        Debug::printf("sender is ");
+        for (int i = 0; i < 5; ++i) {
+            Debug::printf("%x:", sender[i]);
         }
+        Debug::printf("%x\n", sender[5]);
 
-        case PacketType::IPv4:
+        const PacketType etherType = getCurrentPacketType();
+        Debug::printf("type is %x\n", etherType);
+
+        switch(etherType)
         {
-            Debug::printf("IPV4 PACKET");
-            for(int a = 0; a < packetLength; ++a)
-            {     
-                Debug::printf("%02x (%03d) ", this->ReceiveBuffer[this->currentBufferPosition + a], 
-                    this->ReceiveBuffer[this->currentBufferPosition + a]);
+            case PacketType::ARP:
+            {
+                Debug::printf("ARP PACKET");
+                ARPPacket request;
+                memcpy(&request, &this->ReceiveBuffer[this->currentBufferPosition + 18], 28);
+                //request.printPacket();
+
+                //this->arpCache.AddEntry(request.srcIP, request.srcMac);
+
+                unsigned char packet[42] = {0};
+                memcpy(packet, sender, 6);
+                memcpy(packet+6, myMac, 6);
+                packet[12] = 0x08;
+                packet[13] = 0x06;
+
+                ARPPacket reply;
+                memcpy(reply.hardwareType, request.hardwareType, 2);
+                memcpy(reply.protocolType, request.protocolType, 2);
+                reply.hardwareLen = request.hardwareLen;
+                reply.protocolLen = request.protocolLen;
+                reply.operationCode[0] = 0;
+                reply.operationCode[1] = 2;
+                memcpy(reply.srcMac, myMac, 6);
+                memcpy(reply.srcIP, request.destIP, 4);
+                memcpy(reply.destMac, request.srcMac, 6);
+                memcpy(reply.destIP, request.srcIP, 4);
+
+                //reply.printPacket();
+
+                memcpy(packet+14, &reply, 28);
+                this->sendPacket(packet, 42);
+                break;
             }
-            break;
+
+            case PacketType::IPv4:
+            {
+                Debug::printf("IPV4 PACKET");
+                for(int a = 0; a < packetLength; ++a)
+                {     
+                    Debug::printf("%02x (%03d) ", this->ReceiveBuffer[this->currentBufferPosition + a], 
+                        this->ReceiveBuffer[this->currentBufferPosition + a]);
+                }
+                break;
+            }
+
+
+            case PacketType::IPv6:
+            {
+                break;
+            }
+
+            case PacketType::UNKNOWN:
+            {
+                break;
+            }
         }
-
-
-        case PacketType::IPv6:
-        {
-            break;
-        }
-
-        case PacketType::UNKNOWN:
-        {
-            break;
-        }
-
+    }
+    else
+    {
+        Debug::printf("Found somebody else's packet.\n");
     }
 
     this->currentBufferPosition+= realPacketLength;
@@ -132,6 +137,34 @@ void Network::sendPacket(const unsigned char* data, int length)
     currentBufferIndex %= 4;
 }
 
+bool Network::isCurrentPacketForUs() const
+{
+    int i = 0;
+    for (; i < 6; ++i) 
+    {
+        Debug::printf("Checking rcv %x vs our %x\n", this->ReceiveBuffer[this->currentBufferPosition + i + 4], myMac[i]);
+        if(this->ReceiveBuffer[this->currentBufferPosition + i + 4] != myMac[i])
+        {      
+            break;
+        }
+    }
+
+    if(i == 6)
+        return true;
+
+    i = 0;
+    for (; i < 6; ++i) 
+    {
+        Debug::printf("Checking rcv %x vs broadcast %x\n", this->ReceiveBuffer[this->currentBufferPosition + i + 4], 0xff);
+        if(this->ReceiveBuffer[this->currentBufferPosition + i + 4] != 0xFF)
+        {
+            break;
+        }
+    }
+
+    return i == 6;
+}
+
 //Retrieves the length of the packet currently
 //pointed to by bufferPosition.
 unsigned short Network::getCurrentPacketLength() const
@@ -143,7 +176,8 @@ unsigned short Network::getCurrentPacketLength() const
 //pointed to by bufferPosition.
 void Network::getCurrentPacketSender(unsigned char sender[6])
 {
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i) 
+    {
         sender[i] = this->ReceiveBuffer[this->currentBufferPosition + i + 10];
     }
 }

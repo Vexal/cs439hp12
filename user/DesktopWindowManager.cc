@@ -53,7 +53,7 @@ void DesktopWindowManager::Run()
 	while(1)
 	{
 		Sleep(1000);
-		puts("rendering.\n");
+		//puts("rendering.\n");
 		LockScreenBuffer(this->screenBufferId);
 		this->acquireNewChildProcesses();
 		this->renderChildren();

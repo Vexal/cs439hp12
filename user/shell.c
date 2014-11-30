@@ -10,7 +10,7 @@ int main() {
     while (1) {
 
         puts("shell> ");
-        char* in = firstRun ? "login" : gets();
+        char* in = firstRun ? "TestProgram" : gets();
         firstRun = 0;
         int ind = 0;
         int argc = 0;

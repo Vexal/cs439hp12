@@ -90,6 +90,7 @@ private:
 	PacketType getCurrentPacketType() const;
 	void sendPacket(const unsigned char* data, int length);
 	void handlePacketReceiveInterrupt();
+	bool isCurrentPacketForUs() const;
 
 public:
 	static void InitNetwork();
