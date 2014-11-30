@@ -15,15 +15,25 @@ int main()
 
 	for(int a = 0; a < 320 * 200; ++a)
 	{
-		buf[a] = a % 256;
+		buf[a] = 2;
 	}
 
-	//while(1)
+	while(1)
 	{
+
+		Sleep(500);
+		//puts("attemping to lock buffer for writing: ");
+		//putdec(screenBufferId);
+		LockScreenBuffer(screenBufferId);
+		puts(" ...done.\n");
 		if(WriteScreenBuffer(screenBufferId, buf) < 0)
 		{
 			puts("Failed to write Test Game screenbuffer.\n");
 		}
+		UnlockScreenBuffer(screenBufferId);
+
+		//puts("finished writing buffer.\n");
+
 	}
 
 	return 0;

@@ -42,7 +42,7 @@ public:
 	inline int GetWidth() const {return this->width;}
 	inline int GetHeight() const {return this->height;}
 	inline unsigned int GetOwnerProcessId() const {return this->ownerProcessId;}
-	const ScreenBuffer* const GetChildBuffer(int processId);
+	ScreenBuffer* GetChildBuffer(int processId);
 	inline void CopyChildBuffer(int processId, unsigned char* buf) {const ScreenBuffer* const child = this->GetChildBuffer(processId); memcpy(buf, child->buffer, child->width * child->height);}
 	int GetNextChildBuffer();
 	inline int GetBufferRequestCount() {const int sz = this->bufferRequests.GetSize(); return sz;}

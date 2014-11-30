@@ -102,7 +102,7 @@ extern "C" void pic_irq(int irq) {
     case 4: /*com1 */ break;
     case 11:
     {
-        Network::KernelNetwork->HandleNetworkInterrupt();
+    	Network::KernelNetwork->HandleNetworkInterrupt();
     }
     break;
     case 15: /* ide */ break;

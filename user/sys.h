@@ -22,4 +22,7 @@ extern long WriteScreenBuffer(long resourceId, unsigned char* buf);
 extern long GetNewWindowRequests(int* buf);
 extern long GetBufferRequestCount();
 extern long GetChildBuffer(unsigned char* buf, int processId);
+extern long LockScreenBuffer(long id);
+extern long UnlockScreenBuffer(long id);
+extern long Sleep(long milliseconds);
 #endif
