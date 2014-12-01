@@ -288,6 +288,13 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		Process::current->sleepFor(a0);
 	}
 	return 0;
+
+    case 24: //ping(unsigned char ip[4])
+    {
+        
+    }
+    return 0;
+
     default:
         Process::trace("syscall(%d,%d,%d)",num,a0,a1);
         return -1;
