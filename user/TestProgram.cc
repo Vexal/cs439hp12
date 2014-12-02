@@ -17,7 +17,7 @@ int main()
 	testNew[3] = 0;
 	
 	puts(testNew);
-	testdraw('a');
+	//testdraw('a');
 	puts("Finished calling testdraw\n");
 	delete[] testNew;
 

@@ -243,6 +243,7 @@ void Network::resplondToEchoRequest()
 	memcpy(buffer + 30, this->currentBuffer() + 26 + 4, 4);
 
 	this->sendPacket(buffer, len);
+	delete[] buffer;
 }
 
 void Network::sendARPRequest(const unsigned char ip[4])

@@ -56,7 +56,7 @@ void DesktopWindowManager::Run()
 {
 	while(1)
 	{
-		Sleep(50);
+		Sleep(5);
 		this->handleKeyInput();
 		LockScreenBuffer(this->screenBufferId);
 		this->acquireNewChildProcesses();
@@ -93,6 +93,7 @@ void DesktopWindowManager::acquireNewChildProcesses()
 			//puthex((long)this->childWindows.first->value);
 		}
 
+		delete[] newProcessIds;
 		puts("initialized new process windows.\n");
 	}
 }
@@ -137,12 +138,12 @@ void DesktopWindowManager::handleKeyInput()
 	for(int a = 0; a < keyPressCount; ++a)
 	{
 		const char kp = buf[a] & ~128;
-		puts("detected key press: ");
+		//puts("detected key press: ");
 		char c[3] = {kp, '\n', 0};
 		puts(c);
 		if((buf[a] & 128) > 0)
 		{
-			puts("(key up)\n");
+			//puts("(key up)\n");
 		}
 		else
 		{

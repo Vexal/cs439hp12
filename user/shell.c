@@ -96,6 +96,12 @@ int main() {
         	}
 
             if (in) free(in);
+            for(int a = 0; a < argc; ++a)
+            {
+            	free(args[a]);
+            }
+
+            free(args);
         	exit(5);
         }
 

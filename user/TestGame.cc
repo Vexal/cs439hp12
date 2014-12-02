@@ -23,7 +23,7 @@ int main()
 		{
 			buf[a] = count % 256;
 		}
-		Sleep(500);
+		Sleep(16);
 		//puts("attemping to lock buffer for writing: ");
 		//putdec(screenBufferId);
 		LockScreenBuffer(screenBufferId);

@@ -44,6 +44,7 @@ private:
 	int foregroundBorderColor;
 
 	List<ChildWindow*> childWindows;
+	List<ChildWindow*> windowRenderList; // index 0 is foregroundWindow
 	ChildWindow* foregroundWindow;
 public:
 	DesktopWindowManager(unsigned int width, unsigned int height);
