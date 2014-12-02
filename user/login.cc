@@ -25,12 +25,6 @@ bool passwordMatches(const char* buf, const char* password) {
 	return true;
 }
 
-long strlen(const char* str) {
-    long n = 0;
-    while (*str++ != 0) n++;
-    return n;
-}
-
 int main() {
 	while(1) {
 		const long fd = open("passwords");

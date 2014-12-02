@@ -39,6 +39,12 @@ void puthex(long v) {
     }
 }
 
+long strlen(const char* str) {
+    long n = 0;
+    while (*str++ != 0) n++;
+    return n;
+}
+
 // returns a string of two chars that represent a hex number
 void gethex(char* buf, long v) {
     char c;

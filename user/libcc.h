@@ -30,20 +30,65 @@ inline void operator delete[](void* p)
 class String
 {
 public:
-	char* c_string;
 	int length;
+	char* c_string;
 
+	String(const char* c_str) :
+		length(strlen(c_str)),
+		c_string(new char[length])
+	{
+		memcpy((void*)this->c_string, (void*)c_str, this->length);
+	}
 	bool operator<(const String& rhs) const
 	{
 		for(int a = 0; a < this->length && a < rhs.length; ++a)
 		{
-			if(rhs.c_string[a] >= this->c_string[a])
+			if(rhs.c_string[a] < this->c_string[a])
+			{
+				return false;
+			}
+			else if(this->c_string[a] < rhs.c_string[a])
+			{
+				return true;
+			}
+		}
+
+		return this->length <= rhs.length;
+	}
+
+	bool operator>(const String& rhs) const
+	{
+		for(int a = 0; a < this->length && a < rhs.length; ++a)
+		{
+			if(rhs.c_string[a] > this->c_string[a])
+			{
+				return false;
+			}
+			else if(this->c_string[a] > rhs.c_string[a])
+			{
+				return true;
+			}
+		}
+
+		return this->length >= rhs.length;
+	}
+
+	bool operator==(const String& rhs) const
+	{
+		for(int a = 0; a < this->length && a < rhs.length; ++a)
+		{
+			if(rhs.c_string[a] != this->c_string[a])
 			{
 				return false;
 			}
 		}
 
-		return this->length < rhs.length;
+		return this->length == rhs.length;
+	}
+
+	char& operator[](int ind)
+	{
+		return this->c_string[ind];
 	}
 };
 
@@ -82,6 +127,7 @@ public:
 		if(this->root == nullptr)
 		{
 			MapNode* newNode = new MapNode(key);
+			this->root = newNode;
 			return newNode->value;
 		}
 
@@ -106,7 +152,7 @@ public:
 	}
 
 	//to check whether a key exists, call this function directly
-	MapNode* Find(MapNode const * const node, const KEY_TYPE& target)
+	MapNode* Find(MapNode * node, const KEY_TYPE& target)
 	{
 		if(node == nullptr)
 		{
@@ -139,17 +185,6 @@ private:
 			{
 				node->leftChild = newChild;
 			}
-			else if(newChild->key > node->leftChild->key)
-			{
-				MapNode* previousLeftChild = node->leftChild;
-				node->leftChild = newChild;
-				newChild->leftChild = previousLeftChild;
-				if(previousLeftChild->rightChild != nullptr && previousLeftChild->rightChild->key > newChild->key)
-				{
-					newChild->rightChild = previousLeftChild->rightChild;
-					previousLeftChild->rightChild = nullptr;
-				}
-			}
 			else
 			{
 				this->addNode(node->leftChild, newChild);
@@ -161,20 +196,9 @@ private:
 			{
 				node->rightChild = newChild;
 			}
-			else if(newChild->key < node->rightChild->key)
-			{
-				MapNode* previousRightChild = node->rightChild;
-				node->rightChild = newChild;
-				newChild->rightChild = previousRightChild;
-				if(previousRightChild->leftChild != nullptr && previousRightChild->leftChild->key > newChild->key)
-				{
-					newChild->leftChild = previousRightChild->leftChild;
-					previousRightChild->leftChild = nullptr;
-				}
-			}
 			else
 			{
-				this->addNode(node->leftChild, newChild);
+				this->addNode(node->rightChild, newChild);
 			}
 		}
 	}
