@@ -175,6 +175,9 @@ void Network::handlePacketReceiveInterrupt()
                             Ping(ipv4Header.srcIPAddress);
 							break;
 						}
+						default:
+							Debug::printf("Received unknown ICMP packet type %d.\n", icmpHeader.type);
+							break;
 						}
 					}
 					break;
