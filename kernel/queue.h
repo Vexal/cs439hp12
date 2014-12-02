@@ -11,9 +11,9 @@ public:
 
 	String(const char* c_str) :
 		length(K::strlen(c_str)),
-		c_string(new char[length])
+		c_string(new char[length + 1])
 	{
-		memcpy(this->c_string, c_str, this->length);
+		memcpy(this->c_string, c_str, this->length + 1);
 	}
 	bool operator<(const String& rhs) const
 	{
