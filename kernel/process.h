@@ -11,6 +11,7 @@
 #include "table.h"
 
 class Timer;
+class Permission;
 
 class Process : public Resource {
 
@@ -100,6 +101,7 @@ public:
     // Resources
     Table *resources;
 
+    static Permission* userPermissions;
     // create a process with an optional name
     // the new process inserts itself in the ready queue
     Process(const char* name, Table* resources);
@@ -187,7 +189,7 @@ public:
     static void checkKilled();
 
     // execv
-    long execv(const char* fileName, SimpleQueue<const char*> *list, long count);
+    long execv(const char* fileName, SimpleQueue<const char*> *list, long count, bool checkPermissions = false);
 
     // Resource methods 
     virtual Resource* forkMe() {

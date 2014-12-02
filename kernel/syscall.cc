@@ -10,6 +10,7 @@
 #include "screenbuffer.h"
 #include "network.h"
 #include "kbd.h"
+#include "permission.h"
 
 void Syscall::init(void) {
     IDT::addTrapHandler(100,(uint32_t)syscallTrap,3);
@@ -129,7 +130,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
                  i++;
              }
 
-             long rc = Process::current->execv(name,&args,i);
+             long rc = Process::current->execv(name,&args,i, true);
 
              /* execv failed, cleanup */
              while (!args.isEmpty()) {
@@ -329,6 +330,11 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 
 		return foundCount;
 	}
+	case 29: //SetUserPermissions(long uid)
+	{
+		Process::userPermissions = new Permission(a0);
+	}
+	return 0;
     default:
         Process::trace("syscall(%d,%d,%d)",num,a0,a1);
         return -1;

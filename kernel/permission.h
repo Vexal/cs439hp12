@@ -1,12 +1,7 @@
 #ifndef _PERMISSION_H_
 #define _PERMISSION_H_
 
-extern "C" {
-	#include "libc.h"
-	#include "sys.h"
-}
-
-#include "libcc.h"
+#include "queue.h"
 
 struct FilePermission
 {
@@ -19,8 +14,10 @@ class Permission {
 	//List<FilePermissions>
 	char* buffer;
 	unsigned int len;
+	long userId;
+	Map<String, FilePermission> filePermissions;
 	// assume permissions file fits in one block for now
-	void loadBuffer(long userID);
+	void loadBuffer();
 	void processBuffer();
 public:
 	Permission(long userID);

@@ -5,6 +5,7 @@ typedef unsigned int size_t;
 
 extern "C" {
 #include "heap.h"
+#include "libc.h"
 }
 
 inline void* operator new(size_t size)

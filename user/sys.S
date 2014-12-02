@@ -264,3 +264,11 @@ GetQueuedKeyPresses:
 	int $100
 	ret
 
+.global SetUserPermissions //SetUserPermissions(long uid);
+SetUserPermissions:
+	mov $29, %eax
+	mov 4(%esp), %ecx
+	mov $0, %edx
+	int $100
+	ret
+

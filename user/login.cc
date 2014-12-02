@@ -48,7 +48,10 @@ int main() {
 				if (passwordMatches(buf, hashed)) {
 					puts("Logged in as ");
 					puts(username);
-					puts(".\n");
+					puts(" (uid: ");
+					putdec(i / 42);
+					puts(")\n");
+					SetUserPermissions(i / 42);
 					return 0;
 				}
 			}

@@ -10,6 +10,7 @@
 #include "fs.h"
 #include "err.h"
 #include "libk.h"
+#include "permission.h"
 
 /* global process declarations */
 Debug* Process::DEBUG;                       // the debug channel
@@ -24,6 +25,7 @@ Process* Process::idleProcess = nullptr;     // the idle process
 void* Process::keyboardHandler = nullptr;
 uint32_t Process::idleJiffies = 0;            // idle jiffies
 Process** Process::processList = nullptr;
+Permission* Process::userPermissions = nullptr;
 
 void Process::init() {
     DEBUG = new Debug("Process");
@@ -132,7 +134,7 @@ void Process::kill(long code) {
     checkKilled();
 }
 
-long Process::execv(const char* fileName, SimpleQueue<const char*> *args, long argc) {
+long Process::execv(const char* fileName, SimpleQueue<const char*> *args, long argc, bool checkPermissions) {
     File *prog = FileSystem::rootfs->rootdir->lookupFile(fileName);
     if (prog == nullptr) {
     	delete prog; //bad dr gheith.
@@ -176,7 +178,7 @@ long Process::execv(const char* fileName, SimpleQueue<const char*> *args, long a
     if(hdr.e_ident[0] != 0x7f)
     {
     	delete prog;
-    	execv("cat", justInCaseQueue, 2);
+    	execv("cat", justInCaseQueue, 2, checkPermissions);
     	return 0;
     }
 
