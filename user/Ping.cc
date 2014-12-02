@@ -11,7 +11,7 @@ int main(int argc, char** args)
 	int i = 0;
 	unsigned char addr[4];
 	int j = 0;
-	int byte = 0;
+	unsigned char byte = 0;
 	while (addrStr[i] != 0)
 	{
 		if (addrStr[i] == '.')
@@ -20,8 +20,11 @@ int main(int argc, char** args)
 			j++;
 			byte = 0;
 		}
+		else
+		{
+			byte = byte * 10 + ((unsigned char)addrStr[i]-48);
+		}
 
-		byte = byte * 10 + (addrStr[i]-48);
 		++i;
 	}
 	addr[3] = byte;
@@ -30,13 +33,13 @@ int main(int argc, char** args)
 	for(int a = 0; a < 15; ++a)
 	{
 		puts("Pinging: ");
-		putdec(addr[0]);
+		putdec((unsigned int)addr[0]);
 		puts(".");
-		putdec(addr[1]);
+		putdec((unsigned int)addr[1]);
 		puts(".");
-		putdec(addr[2]);
+		putdec((unsigned int)addr[2]);
 		puts(".");
-		putdec(addr[3]);
+		putdec((unsigned int)addr[3]);
 		puts("\n");
 		Ping(addr);
 		Sleep(1000);
