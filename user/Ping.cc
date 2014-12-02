@@ -22,6 +22,7 @@ int main(int argc, char** args)
 		}
 
 		byte = byte * 10 + (addrStr[i]-48);
+		++i;
 	}
 	addr[3] = byte;
 
