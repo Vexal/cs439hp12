@@ -10,8 +10,6 @@ extern "C" {
 #include "sys.h"
 }
 
-#include "libcc.h"
-
 #include "DesktopWindowManager.h"
 
 DesktopWindowManager::DesktopWindowManager(int width, int height) :

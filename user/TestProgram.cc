@@ -3,7 +3,6 @@ extern "C" {
 #include "sys.h"
 }
 
-#include "libcc.h"
 #include "DesktopWindowManager.h"
 
 int main()
