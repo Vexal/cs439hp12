@@ -56,8 +56,8 @@ struct ARPPacket
 class ARPCache
 {
 public:
-	void AddEntry(const char ipAddress[4], const char macAddress[6]);
-	ARPEntry GetEntry(const char ipAddress[4]) const;
+	void AddEntry(const unsigned char ipAddress[4], const unsigned char macAddress[6]);
+	bool GetEntry(const unsigned char ipAddress[4], unsigned char macAddress[6]) const;
 private:
 	ARPEntry cache[100];
 	int count;
@@ -73,16 +73,30 @@ struct IPv4Header
 	unsigned char timeToLive;
 	unsigned char protocol;
 	unsigned char headerChecksum[2];
-	unsigned char sourceIPAddress[4];
-	unsigned char destinationIPAddress[4];
+	unsigned char srcIPAddress[4];
+	unsigned char destIPAddress[4];
 
 	inline void print()
 	{
 		Debug::printf("IPv4header:\n Total length: %x%x\n", totalLength[0], totalLength[1]);
 		Debug::printf(" Protocol: %x\n", protocol);
-		Debug::printf(" Source IP: %d.%d.%d.%d\n", sourceIPAddress[0], sourceIPAddress[1], sourceIPAddress[2], sourceIPAddress[3]);
-		Debug::printf(" Destination IP: %d.%d.%d.%d\n", destinationIPAddress[0], destinationIPAddress[1], destinationIPAddress[2], destinationIPAddress[3]);
+		Debug::printf(" Source IP: %d.%d.%d.%d\n", srcIPAddress[0], srcIPAddress[1], srcIPAddress[2], srcIPAddress[3]);
+		Debug::printf(" Destination IP: %d.%d.%d.%d\n", destIPAddress[0], destIPAddress[1], destIPAddress[2], destIPAddress[3]);
 	}
+
+	IPv4Header() : 
+		versionIHL(0x45),
+		DSCPECN(0x00),
+		totalLength({0x00, 0x54}),
+		identification({0xfe, 0x8d}),
+		flagsFOffst({0x40, 0x00}),
+		timeToLive(0x40),
+		protocol(),
+		headerChecksum(),
+		srcIPAddress(),
+		destIPAddress()
+	{}
+
 };
 
 struct ICMPHeader
@@ -90,7 +104,8 @@ struct ICMPHeader
 	unsigned char type;
 	unsigned char code;
 	unsigned char checksum[2];
-	unsigned char restOfHeader[4];
+	unsigned char identifier[2];
+	unsigned char seqNum[2];
 
 	inline void print()
 	{
@@ -107,6 +122,7 @@ public:
 	static Network* KernelNetwork;
 	static constexpr unsigned int ioaddr = 0xc000;
 	static const unsigned char myMac[6];
+	static const unsigned char myIP[4];
 	ARPCache arpCache;
 	long netCount;
 	long currentBufferPosition;
@@ -118,6 +134,7 @@ public:
 	Network();
 	void Init();
 	void HandleNetworkInterrupt();
+	void Ping(unsigned char ip[4]);
 
 private:
 	unsigned short getCurrentPacketLength() const;
@@ -126,6 +143,7 @@ private:
 	void getCurrentPacketSender(unsigned char sender[6]);
 	PacketType getCurrentPacketType() const;
 	void sendPacket(const unsigned char* data, int length);
+	void sendARPRequest(const unsigned char ip[4]);
 	void handlePacketReceiveInterrupt();
 	bool isCurrentPacketForUs() const;
 	void resplondToEchoRequest();

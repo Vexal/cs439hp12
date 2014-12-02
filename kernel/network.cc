@@ -1,8 +1,10 @@
 #include "network.h"
 #include "machine.h"
+#include "process.h"
 
 Network* Network::KernelNetwork = nullptr;
 const unsigned char Network::myMac[6] = {0x52,0x54,0x00,0x12,0x34,0x56};
+const unsigned char Network::myIP[4] = {192,168,7,2};
 
 void Network::HandleNetworkInterrupt() 
 {
@@ -30,6 +32,50 @@ void Network::HandleNetworkInterrupt()
     	//buffer full.
     	Debug::printf("Our network buffer is full.\n");
     }
+}
+
+void Network::Ping(unsigned char ip[4])
+{
+    unsigned char echoRequest[98];
+
+    unsigned char destMac[6];
+    while (! this->arpCache.GetEntry(ip, destMac))
+    {
+        this->sendARPRequest(ip);
+        Process::sleepFor(500);
+    }
+
+    memcpy(echoRequest, destMac, 6);
+    memcpy(echoRequest + 6, myMac, 6);
+    echoRequest[12] = 0x08;
+    echoRequest[13] = 0x00;
+
+    IPv4Header ipv4Header;
+    ipv4Header.protocol = 0x01;
+    memcpy(ipv4Header.srcIPAddress, myIP, 4);
+    memcpy(ipv4Header.destIPAddress, ip, 4);
+
+    memcpy(echoRequest + 14, &ipv4Header, sizeof(IPv4Header));
+
+    ICMPHeader icmpHeader;
+    icmpHeader.type = 0x08;
+    icmpHeader.code = 0x00;
+    //don't know if makes sense
+    icmpHeader.identifier[0] = 0x10;
+    icmpHeader.identifier[1] = 0x0d;
+    icmpHeader.seqNum[0] = 0x00;
+    icmpHeader.seqNum[1] = 0x01;
+
+    memcpy(echoRequest + 14 + sizeof(IPv4Header), &icmpHeader, sizeof(ICMPHeader));
+
+    for (int i = 42; i < 98; ++i)
+    {
+        echoRequest[i] = i;
+    }
+
+    Debug::printf("PINGINGINGINGING");
+
+    this->sendPacket(echoRequest, 98);
 }
 
 Network::Network() :
@@ -68,7 +114,7 @@ void Network::handlePacketReceiveInterrupt()
                 memcpy(&request, &this->ReceiveBuffer[this->currentBufferPosition + 18], 28);
                 //request.printPacket();
 
-                //this->arpCache.AddEntry(request.srcIP, request.srcMac);
+                this->arpCache.AddEntry(request.srcIP, request.srcMac);
 
                 unsigned char packet[42] = {0};
                 memcpy(packet, sender, 6);
@@ -126,6 +172,7 @@ void Network::handlePacketReceiveInterrupt()
 						{
 							Debug::printf("Received ICMP echo request.\n");
 							this->resplondToEchoRequest();
+                            Ping(ipv4Header.srcIPAddress);
 							break;
 						}
 						}
@@ -196,6 +243,40 @@ void Network::resplondToEchoRequest()
 	memcpy(buffer + 30, this->currentBuffer() + 26 + 4, 4);
 
 	this->sendPacket(buffer, len);
+}
+
+void Network::sendARPRequest(const unsigned char ip[4])
+{
+    Debug::printf("SENDING ARP REQUEST");
+    ARPPacket request;
+    
+    unsigned char packet[42] = {0};
+    
+    for (int i = 0; i < 6; ++i)
+    {
+        packet[i] = 0xFF;
+    }
+
+    memcpy(packet+6, myMac, 6);
+    packet[12] = 0x08;
+    packet[13] = 0x06;
+
+    request.hardwareType[0] = 0x00;
+    request.hardwareType[1] = 0x01;
+    request.protocolType[0] = 0x08;
+    request.protocolType[1] = 0x00;
+    request.hardwareLen = 0x06;
+    request.protocolLen = 0x04;
+    request.operationCode[0] = 0x00;
+    request.operationCode[1] = 0x01;
+    memcpy(request.srcMac, myMac, 6);
+    memcpy(request.srcIP, myIP, 4);
+    request.destMac[6] = {0};
+    memcpy(request.destIP, ip, 4);
+
+    memcpy(packet+14, &request, 28);
+    this->sendPacket(packet, 42);
+
 }
 
 bool Network::isCurrentPacketForUs() const
@@ -398,4 +479,33 @@ unsigned short Network::pciCheckVendor(unsigned char bus, unsigned char slot)
 	}
 
 	return vendor;
+}
+
+void ARPCache::AddEntry(const unsigned char ipAddress[4], const unsigned char macAddress[6])
+{
+    memcpy(this->cache[count].ipAddress, ipAddress, 4);
+    memcpy(this->cache[count].macAddress, macAddress, 6);
+    count = (count + 1) % 100;
+}
+
+bool ARPCache::GetEntry(const unsigned char ipAddress[4], unsigned char macAddress[6]) const
+{
+    for (int i = 0; i < 100; ++i)
+    {
+        bool f = true;
+        for (int j = 0; j < 4; ++j)
+        {
+            if (ipAddress[j] != this->cache[i].ipAddress[j])
+            {
+                f = false;
+                break;
+            }
+        }
+        if (f)
+        {
+            memcpy(macAddress, this->cache[i].macAddress, 6);
+            return true;
+        }
+    }
+    return false;
 }
