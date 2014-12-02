@@ -28,9 +28,6 @@ md5 : CFILES=libc.c heap.c
 .grace : CCFILES=grace.cc
 .grace : CFILES=libc.c heap.c
 
-permission : CCFILES=permission.cc
-permission : CFILES=libc.c heap.c
-
 TestProgram : CFILES=libc.c heap.c
 TestProgram : CCFILES=TestProgram.cc DesktopWindowManager.cc
 
