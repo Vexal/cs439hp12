@@ -73,11 +73,20 @@ public:
 	}
 
 	inline ListNode* GetHead() {return this->first;}
+	inline ListNode* GetLast() {return this->last;}
 
-	inline void MoveEndToFront()
+	inline void MoveFrontToEnd()
 	{
-		this->first->previous = this->last;
-		//this->last->next =
+		if(this->first == nullptr || this->first->next == nullptr)
+			return;
+
+		ListNode* oldFirst = this->first;
+		this->first->next->previous = nullptr;
+		this->first = this->first->next;
+
+		this->last->next = oldFirst;
+		oldFirst->previous = this->last;
+		this->last = oldFirst;
 	}
 };
 

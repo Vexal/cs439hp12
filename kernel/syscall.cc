@@ -308,6 +308,27 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		return bytesRead;
 	}
 	return 0;
+	case 26: //QueueChildKeyInput(long childId, char key)
+	{
+		Process::processList[a0]->queueKeyPress(a1);
+	}
+	return 0;
+	case 27: //GetQueuedkeyPressCount()
+	{
+		return Process::current->getKeyPressCount();
+	}
+	case 28: //GetQueuedKeyPresses(char* buf, int len);
+	{
+		int foundCount = 0;
+		char* buf = (char*)a0;
+		for(foundCount = 0; foundCount < a1 && !Process::current->keyQueue.isEmpty(); ++foundCount)
+		{
+			buf[foundCount] = Process::current->keyQueue.removeHead();
+			++foundCount;
+		}
+
+		return foundCount;
+	}
     default:
         Process::trace("syscall(%d,%d,%d)",num,a0,a1);
         return -1;

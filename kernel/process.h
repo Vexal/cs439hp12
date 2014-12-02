@@ -25,6 +25,7 @@ public:
     // so it puts itself on the reaper queue and the
     // idle process will eventually remove it
     static SimpleQueue<Process*> *reaperQueue;
+    static Process** processList;
     static void checkReaper();
 
     // the idle process
@@ -42,6 +43,7 @@ public:
     // mutex for tracing
     static Semaphore *traceMutex;
 
+    SimpleQueue<char> keyQueue;
     // process id
     int id;
 
@@ -191,6 +193,11 @@ public:
     virtual Resource* forkMe() {
         return nullptr;
     }
+
+    Mutex keyMutex;
+    inline void queueKeyPress(char key) {keyMutex.lock(); this->keyQueue.addTail(key); keyMutex.unlock();}
+    inline char getNextKeyPress() {keyMutex.lock(); const char c = this->keyQueue.removeHead(); keyMutex.unlock(); return c;}
+    inline int getKeyPressCount() {keyMutex.lock(); const int sz = this->keyQueue.GetSize(); keyMutex.unlock(); return sz;}
 
     // print a trace message with the process identity prefixed to it
     void static vtrace(const char* msg, va_list ap);

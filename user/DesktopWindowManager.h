@@ -28,8 +28,8 @@ class DesktopWindowManager
 {
 private:
 	long screenBufferId;
-	unsigned int width;
-	unsigned int height;
+	int width;
+	int height;
 	unsigned char* buffer;
 	unsigned int testCount;
 
@@ -44,10 +44,10 @@ private:
 	int foregroundBorderColor;
 
 	List<ChildWindow*> childWindows;
-	List<ChildWindow*> windowRenderList; // index 0 is foregroundWindow
 	ChildWindow* foregroundWindow;
+
 public:
-	DesktopWindowManager(unsigned int width, unsigned int height);
+	DesktopWindowManager(int width, int height);
 	void Initialize();
 	void Run();
 

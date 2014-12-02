@@ -14,7 +14,7 @@ extern "C" {
 
 #include "DesktopWindowManager.h"
 
-DesktopWindowManager::DesktopWindowManager(unsigned int width, unsigned int height) :
+DesktopWindowManager::DesktopWindowManager(int width, int height) :
 	screenBufferId(-1),
 	width(width),
 	height(height),
@@ -28,7 +28,6 @@ DesktopWindowManager::DesktopWindowManager(unsigned int width, unsigned int heig
 	backgroundBorderColor(3),
 	foregroundBorderColor(4),
 	foregroundWindow(nullptr)
-
 {
 
 }
@@ -42,27 +41,21 @@ void DesktopWindowManager::Initialize()
 	}
 
 	puts("Successfully acquired screen buffer.\n");
-
-	for(int a = 0; a < 320; ++a)
-	{
-		for(int b = 0; b < 200; ++b)
-		{
-			this->buffer[b*320 + a] = 0;
-		}
-	}
 }
 
 void DesktopWindowManager::Run()
 {
 	while(1)
 	{
-		Sleep(5);
+		if(this->foregroundWindow != nullptr)
+			this->foregroundWindow = this->childWindows.GetHead()->value;
 		this->handleKeyInput();
 		LockScreenBuffer(this->screenBufferId);
 		this->acquireNewChildProcesses();
 		this->renderChildren();
 		this->sendBufferData();
 		UnlockScreenBuffer(this->screenBufferId);
+		Sleep(5);
 	}
 }
 
@@ -87,10 +80,9 @@ void DesktopWindowManager::acquireNewChildProcesses()
 			puts("\n");
 			ChildWindow* newWindow = new ChildWindow(this->defaultChildX, this->defaultChildY, 80, 60, newId, this->defaultBorderWidth);
 			this->foregroundWindow = newWindow;
-			this->defaultChildX += 95;
+			this->defaultChildX += 15;
 			this->defaultChildY += 15;
 			this->childWindows.Push(newWindow);
-			//puthex((long)this->childWindows.first->value);
 		}
 
 		delete[] newProcessIds;
@@ -100,12 +92,21 @@ void DesktopWindowManager::acquireNewChildProcesses()
 
 void DesktopWindowManager::renderChildren()
 {
-	List<ChildWindow*>::ListNode* first = this->childWindows.GetHead();
+	List<ChildWindow*>::ListNode* last = this->childWindows.GetLast();
 
-	while(first != nullptr)
+	for(int a = 0; a < this->width; ++a)
+	{
+		for(int b = 0; b < this->height; ++b)
+		{
+			this->buffer[b*this->width + a] = 0;
+		}
+	}
+
+	while(last != nullptr)
 	{
 		//render the child window at the correct position.
-		const ChildWindow* const child = first->value;
+		//render the children backwards.
+		const ChildWindow* const child = last->value;
 		this->renderWindowBorder(child);
 
 		unsigned char* childWindowBuffer = new unsigned char[child->GetWidth() * child->GetHeight()];
@@ -126,7 +127,7 @@ void DesktopWindowManager::renderChildren()
 		}
 
 		delete[] childWindowBuffer;
-		first = first->next;
+		last = last->previous;
 	}
 }
 
@@ -140,7 +141,7 @@ void DesktopWindowManager::handleKeyInput()
 		const char kp = buf[a] & ~128;
 		//puts("detected key press: ");
 		char c[3] = {kp, '\n', 0};
-		puts(c);
+		//puts(c);
 		if((buf[a] & 128) > 0)
 		{
 			//puts("(key up)\n");
@@ -164,6 +165,12 @@ void DesktopWindowManager::handleKeyInput()
 					this->foregroundWindow->yPosition+= 1;
 					break;
 				case 'p':
+					puts("Previous foreground window is "); putdec(this->childWindows.GetHead()->value->GetProcessId()); puts("\n");
+					this->childWindows.MoveFrontToEnd();
+					puts("New foreground window is "); putdec(this->childWindows.GetHead()->value->GetProcessId()); puts("\n");
+					break;
+				default:
+					QueueChildKeyInput(this->foregroundWindow->GetProcessId(), kp);
 					break;
 				}
 			}

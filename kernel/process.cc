@@ -23,12 +23,14 @@ Timer* Process::timers = nullptr;            // pending timers
 Process* Process::idleProcess = nullptr;     // the idle process
 void* Process::keyboardHandler = nullptr;
 uint32_t Process::idleJiffies = 0;            // idle jiffies
+Process** Process::processList = nullptr;
 
 void Process::init() {
     DEBUG = new Debug("Process");
     readyQueue = new SimpleQueue<Process*>();
     reaperQueue = new SimpleQueue<Process*>();
     traceMutex = new Semaphore(1);
+    processList = new Process*[1000];
 }
 
 void Process::checkReaper() {
@@ -74,6 +76,7 @@ Process::Process(const char* name, Table *resources_) :
 {
     //Debug::printf("Process::Process %p",this);
     id = nextId.getThenAdd(1);
+    processList[id] = this;
     iDepth = 0;
     iCount = 0;
     isKilled = false;
@@ -403,6 +406,8 @@ void Process::tick() {
                 Process* p = first->waiting.removeHead();
                 p->makeReady();
             }
+
+            delete first;
         }
     }
 

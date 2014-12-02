@@ -238,3 +238,29 @@ GetKeyPresses:
 	mov 8(%esp), %edx
 	int $100
 	ret
+
+.global QueueChildKeyInput
+QueueChildKeyInput:
+	mov $26, %eax
+	mov 4(%esp), %ecx
+	mov 8(%esp), %edx
+	int $100
+	ret
+
+
+.global GetQueuedKeyPressCount
+GetQueuedKeyPressCount:
+	mov $27, %eax
+	mov $0, %ecx
+	mov $0, %edx
+	int $100
+	ret
+
+.global GetQueuedKeyPresses //long GetQueuedKeyPresses(char* buf);
+GetQueuedKeyPresses:
+	mov $28, %eax
+	mov 4(%esp), %ecx
+	mov 8(%esp), %edx
+	int $100
+	ret
+
