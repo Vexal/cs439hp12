@@ -1,0 +1,3 @@
+cat 001 echo 111 .grace 111 ls 101 panic 110 shutdown 001
+ls 101 cat 001 shutdown 001 TestGame 111 TestProgram 111
+ls 001 echo 001 longfilename 100 TestGame 111 TestProgram 111
