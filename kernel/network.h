@@ -92,7 +92,7 @@ struct IPv4Header
 		flagsFOffst({0x40, 0x00}),
 		timeToLive(0x40),
 		protocol(),
-		headerChecksum(),
+		headerChecksum({0x00, 0x00}),
 		srcIPAddress(),
 		destIPAddress()
 	{}
@@ -113,6 +113,14 @@ struct ICMPHeader
 		Debug::printf(" Type: %d\n", type);
 		Debug::printf(" Code: %d\n", code);
 	}
+
+	ICMPHeader() :
+		type(),
+		code(),
+		checksum({0x00, 0x00}),
+		identifier({0x00, 0x00}),
+		seqNum({0x00, 0x00})
+	{}
 };
 
 class Network
@@ -148,6 +156,7 @@ private:
 	bool isCurrentPacketForUs() const;
 	void resplondToEchoRequest();
 	unsigned char* currentBuffer() {return this->ReceiveBuffer + this->currentBufferPosition;}
+	void calcChecksum(unsigned char* header, int length, unsigned char checksum[2]);
 
 public:
 	static void InitNetwork();

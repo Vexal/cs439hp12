@@ -55,6 +55,8 @@ void Network::Ping(const unsigned char ip[4])
     memcpy(ipv4Header.srcIPAddress, myIP, 4);
     memcpy(ipv4Header.destIPAddress, ip, 4);
 
+    this->calcChecksum((unsigned char *) &ipv4Header, sizeof(IPv4Header), ipv4Header.headerChecksum);
+
     memcpy(echoRequest + 14, &ipv4Header, sizeof(IPv4Header));
 
     ICMPHeader icmpHeader;
@@ -68,10 +70,12 @@ void Network::Ping(const unsigned char ip[4])
 
     memcpy(echoRequest + 14 + sizeof(IPv4Header), &icmpHeader, sizeof(ICMPHeader));
 
-    for (int i = 42; i < 98; ++i)
+    for (int i = 58; i < 98; ++i)
     {
         echoRequest[i] = i;
     }
+
+    this->calcChecksum((unsigned char *) echoRequest + 34, 64, echoRequest + 36 );
 
     Debug::printf("PINGINGINGINGING");
 
@@ -172,7 +176,6 @@ void Network::handlePacketReceiveInterrupt()
 						{
 							Debug::printf("Received ICMP echo request.\n");
 							this->resplondToEchoRequest();
-                            Ping(ipv4Header.srcIPAddress);
 							break;
 						}
 						default:
@@ -512,4 +515,29 @@ bool ARPCache::GetEntry(const unsigned char ipAddress[4], unsigned char macAddre
         }
     }
     return false;
+}
+
+void Network::calcChecksum(unsigned char* header, int length, unsigned char checksum[2])
+{
+    unsigned long sum = 0;
+
+    while (length > 1)
+    {
+        sum += *((unsigned short *) header);
+        header += 2;
+        length -=2;
+    }
+
+    if (length > 0)
+    {
+        sum += *header;
+    }
+
+    if (sum >> 16) {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+
+    sum = ~sum;
+    checksum[0] = sum & 0xFF;
+    checksum[1] = sum >> 8;  
 }
