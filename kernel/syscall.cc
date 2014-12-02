@@ -289,11 +289,11 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		Process::current->sleepFor(a0);
 	}
 	return 0;
-        case 24: //ping(unsigned char ip[4])
-        {
-	
-        }
-        return 0;
+	case 24: //ping(unsigned char ip[4])
+	{
+
+	}
+	return 0;
 	case 25: //long GetKeyPresses(char* buf, int bufferLength);
 	{
 		char* buf = (char*)a0;

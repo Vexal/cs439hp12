@@ -223,6 +223,14 @@ Sleep:
 	int $100
 	ret
 
+.global Ping
+Ping:
+	mov $24, %eax
+	mov 4(%esp), %ecx
+	mov $0, %edx
+	int $100
+	ret
+
 .global GetKeyPresses
 GetKeyPresses:
 	mov $25, %eax

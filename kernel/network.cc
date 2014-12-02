@@ -34,7 +34,7 @@ void Network::HandleNetworkInterrupt()
     }
 }
 
-void Network::Ping(unsigned char ip[4])
+void Network::Ping(const unsigned char ip[4])
 {
     unsigned char echoRequest[98];
 

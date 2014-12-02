@@ -47,9 +47,10 @@ public:
 	};
 
 	ListNode* first;
-
+	ListNode* last;
 	List() :
-		first(nullptr)
+		first(nullptr),
+		last(nullptr)
 	{
 
 	}
@@ -61,6 +62,7 @@ public:
 		if(this->first == nullptr)
 		{
 			this->first = newNode;
+			this->last = newNode;
 		}
 		else
 		{
@@ -71,6 +73,12 @@ public:
 	}
 
 	inline ListNode* GetHead() {return this->first;}
+
+	inline void MoveEndToFront()
+	{
+		this->first->previous = this->last;
+		//this->last->next =
+	}
 };
 
 #endif

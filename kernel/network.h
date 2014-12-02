@@ -134,7 +134,7 @@ public:
 	Network();
 	void Init();
 	void HandleNetworkInterrupt();
-	void Ping(unsigned char ip[4]);
+	void Ping(const unsigned char ip[4]);
 
 private:
 	unsigned short getCurrentPacketLength() const;
