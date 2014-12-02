@@ -14,7 +14,6 @@ ScreenBuffer::ScreenBuffer(int width, int height, unsigned int ownerProcessId, u
 
 int ScreenBuffer::GetNextChildBuffer()
 {
-	//Debug::printf("asdfasdf\n");
 	if(this->bufferRequests.isEmpty())
 		return -1;
 
@@ -31,10 +30,8 @@ int ScreenBuffer::GetNextChildBuffer()
 
 void ScreenBuffer::AddBufferRequest(ScreenBuffer* request)
 {
-	//this->mutex.lock();
 	this->bufferRequests.addTail(request);
 	Debug::printf("just added for p: %d.\n", request->GetOwnerProcessId());
-	//this->mutex.unlock();
 }
 
  ScreenBuffer* ScreenBuffer::GetChildBuffer(int processId)

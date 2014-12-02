@@ -33,7 +33,7 @@ class Permission {
 			for (int i = seeking; seeking < length; seeking++) {
 				if (buf[i] == '\n') {
 					userNum++;
-					if (userNums == userID) start = i;
+					if (userNum == userID) start = i;
 					if (userNum == userID + 1) end = i;
 					seeking = i;
 					break;

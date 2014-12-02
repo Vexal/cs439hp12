@@ -172,7 +172,6 @@ void free(void* p) {
     }
 
     int sz = size(idx);
-
     int leftIndex = left(idx);
     int rightIndex = right(idx);
 

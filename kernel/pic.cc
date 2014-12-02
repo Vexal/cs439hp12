@@ -98,7 +98,11 @@ extern "C" void pic_irq(int irq) {
         Pit::handler(); 
         Process::yield();
         break;
-    case 1: /*Keyboard::handler();*/ break;
+    case 1: /*Keyboard::handler();*/ //break;
+    {
+    	Keyboard::handler();
+    }
+    break;
     case 4: /*com1 */ break;
     case 11:
     {

@@ -25,4 +25,9 @@ extern long GetChildBuffer(unsigned char* buf, int processId);
 extern long LockScreenBuffer(long id);
 extern long UnlockScreenBuffer(long id);
 extern long Sleep(long milliseconds);
+extern long Ping(const unsigned char destination[4]);
+extern long GetKeyPresses(char* buf, int bufferLength);
+extern long QueueChildKeyInput(long childId, char key);
+extern long GetQueuedKeyPressCount();
+extern long GetQueuedKeyPresses(char* buf, int len);
 #endif

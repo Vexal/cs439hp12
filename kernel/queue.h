@@ -66,7 +66,7 @@ private:
 public:
     virtual ~SimpleQueue(){}
     SimpleQueue() : first(0), last(0), size(0) {}
-    void addTail(T v) {
+    inline void addTail(T v) {
         Node *n = new Node();
         n->value = v;
         n->prev = last;
@@ -80,10 +80,10 @@ public:
         }
         ++size;
     }
-    bool isEmpty() {
+    inline bool isEmpty() {
         return first == 0;
     }
-    T removeHead() {
+    inline T removeHead() {
         Node *p = first;
         first = p->next;
         if (first == 0) {
@@ -97,7 +97,7 @@ public:
         return v;
     }
     
-    int GetSize() const
+    inline int GetSize() const
     {
     	return this->size;
     }

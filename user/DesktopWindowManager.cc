@@ -14,7 +14,7 @@ extern "C" {
 
 #include "DesktopWindowManager.h"
 
-DesktopWindowManager::DesktopWindowManager(unsigned int width, unsigned int height) :
+DesktopWindowManager::DesktopWindowManager(int width, int height) :
 	screenBufferId(-1),
 	width(width),
 	height(height),
@@ -23,8 +23,11 @@ DesktopWindowManager::DesktopWindowManager(unsigned int width, unsigned int heig
 	defaultChildX(30),
 	defaultChildY(30),
 	defaultChildWidth(80),
-	defaultChildHeight(60)
-
+	defaultChildHeight(60),
+	defaultBorderWidth(3),
+	backgroundBorderColor(3),
+	foregroundBorderColor(4),
+	foregroundWindow(nullptr)
 {
 
 }
@@ -38,27 +41,21 @@ void DesktopWindowManager::Initialize()
 	}
 
 	puts("Successfully acquired screen buffer.\n");
-
-	for(int a = 0; a < 320; ++a)
-	{
-		for(int b = 0; b < 200; ++b)
-		{
-			this->buffer[b*320 + a] = 0;
-		}
-	}
 }
 
 void DesktopWindowManager::Run()
 {
 	while(1)
 	{
-		Sleep(1000);
-		puts("rendering.\n");
+		if(this->foregroundWindow != nullptr)
+			this->foregroundWindow = this->childWindows.GetHead()->value;
+		this->handleKeyInput();
 		LockScreenBuffer(this->screenBufferId);
 		this->acquireNewChildProcesses();
 		this->renderChildren();
 		this->sendBufferData();
 		UnlockScreenBuffer(this->screenBufferId);
+		Sleep(5);
 	}
 }
 
@@ -81,43 +78,46 @@ void DesktopWindowManager::acquireNewChildProcesses()
 			const int newId = newProcessIds[a];
 			putdec(newId);
 			puts("\n");
-			ChildWindow* newWindow = new ChildWindow(this->defaultChildX, this->defaultChildY, 80, 60, newId);
-			this->defaultChildX += 85;
-			this->defaultChildY += 5;
+			ChildWindow* newWindow = new ChildWindow(this->defaultChildX, this->defaultChildY, 80, 60, newId, this->defaultBorderWidth);
+			this->foregroundWindow = newWindow;
+			this->defaultChildX += 15;
+			this->defaultChildY += 15;
 			this->childWindows.Push(newWindow);
-			//puthex((long)this->childWindows.first->value);
 		}
 
+		delete[] newProcessIds;
 		puts("initialized new process windows.\n");
 	}
 }
 
 void DesktopWindowManager::renderChildren()
 {
-	List<ChildWindow*>::ListNode* first = this->childWindows.GetHead();
+	List<ChildWindow*>::ListNode* last = this->childWindows.GetLast();
 
-	while(first != nullptr)
+	for(int a = 0; a < this->width; ++a)
 	{
+		for(int b = 0; b < this->height; ++b)
+		{
+			this->buffer[b*this->width + a] = 0;
+		}
+	}
 
+	while(last != nullptr)
+	{
 		//render the child window at the correct position.
-		const ChildWindow* const child = first->value;
-
-		/*puthex((long)first->value);*/
-		/*puts("Attempting to render window with width: ");
-		putdec(child->GetWidth());
-		puts(" and height: ");
-		putdec(child->GetHeight());
-		puts(".\n");*/
+		//render the children backwards.
+		const ChildWindow* const child = last->value;
+		this->renderWindowBorder(child);
 
 		unsigned char* childWindowBuffer = new unsigned char[child->GetWidth() * child->GetHeight()];
 		GetChildBuffer(childWindowBuffer, child->GetProcessId());
-		//puts("Successfully copied child buffer.\n");
 		int px = 0;
+
 		for(int x = child->GetX(); x < child->GetX() + child->GetWidth(); ++x)
 		{
 			if(x >= this->width)
 				continue;
-			for(int y = child->GetY(); y < child->GetY() + child->GetHeight() ; ++y)
+			for(int y = child->GetY(); y < child->GetY() + child->GetHeight() && y < this->height; ++y)
 			{
 				const int pixelLocation = x + this->width * y;
 				this->buffer[pixelLocation] = childWindowBuffer[px];
@@ -127,9 +127,54 @@ void DesktopWindowManager::renderChildren()
 		}
 
 		delete[] childWindowBuffer;
-		first = first->next;
+		last = last->previous;
+	}
+}
 
-		//puts("Finished rendering window.\n");
+void DesktopWindowManager::handleKeyInput()
+{
+	char buf[128];
+	const int keyPressCount = GetKeyPresses(buf, 128);
+
+	for(int a = 0; a < keyPressCount; ++a)
+	{
+		const char kp = buf[a] & ~128;
+		//puts("detected key press: ");
+		char c[3] = {kp, '\n', 0};
+		//puts(c);
+		if((buf[a] & 128) > 0)
+		{
+			//puts("(key up)\n");
+		}
+		else
+		{
+			if(this->foregroundWindow != nullptr)
+			{
+				switch(kp)
+				{
+				case 'j':
+					this->foregroundWindow->xPosition-= 1;
+					break;
+				case 'l':
+					this->foregroundWindow->xPosition+= 1;
+					break;
+				case 'i':
+					this->foregroundWindow->yPosition-= 1;
+					break;
+				case 'k':
+					this->foregroundWindow->yPosition+= 1;
+					break;
+				case 'p':
+					puts("Previous foreground window is "); putdec(this->childWindows.GetHead()->value->GetProcessId()); puts("\n");
+					this->childWindows.MoveFrontToEnd();
+					puts("New foreground window is "); putdec(this->childWindows.GetHead()->value->GetProcessId()); puts("\n");
+					break;
+				default:
+					QueueChildKeyInput(this->foregroundWindow->GetProcessId(), kp);
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -138,12 +183,67 @@ void DesktopWindowManager::sendBufferData() const
 	WriteScreenBuffer(screenBufferId, this->buffer);
 }
 
-ChildWindow::ChildWindow(int xPosition, int yPosition, int width, int height, int processId) :
+void DesktopWindowManager::renderWindowBorder(const ChildWindow* const child)
+{
+	const int borderXLeftStart = child->GetX() - child->GetBorderWidth();
+	for(int x = borderXLeftStart; x < borderXLeftStart + child->GetBorderWidth(); ++x)
+	{
+		if(x >= this->width)
+			continue;
+
+		for(int y = child->GetY() - child->GetBorderWidth(); y < child->GetY() + child->GetBorderWidth() + child->GetHeight() && y < this->height; ++y)
+		{
+			const int pixelLocation = x + this->width * y;
+			this->buffer[pixelLocation] = this->foregroundWindow == child ? this->foregroundBorderColor : this->backgroundBorderColor;
+		}
+	}
+
+	const int borderXRightStart = child->GetX() + child->GetWidth();
+	for(int x = borderXRightStart; x < borderXRightStart + child->GetBorderWidth(); ++x)
+	{
+		if(x >= this->width)
+			continue;
+
+		for(int y = child->GetY() - child->GetBorderWidth(); y < child->GetY() + child->GetBorderWidth() + child->GetHeight() && y < this->height; ++y)
+		{
+			const int pixelLocation = x + this->width * y;
+			this->buffer[pixelLocation] = this->foregroundWindow == child ? this->foregroundBorderColor : this->backgroundBorderColor;
+		}
+	}
+
+
+	for(int x = borderXLeftStart; x < borderXLeftStart + child->GetWidth() + child->GetBorderWidth(); ++x)
+	{
+		if(x >= this->width)
+			continue;
+
+		for(int y = child->GetY() - child->GetBorderWidth(); y < child->GetY() + child->GetBorderWidth() && y < this->height; ++y)
+		{
+			const int pixelLocation = x + this->width * y;
+			this->buffer[pixelLocation] = this->foregroundWindow == child ? this->foregroundBorderColor : this->backgroundBorderColor;
+		}
+	}
+
+	for(int x = borderXLeftStart; x < borderXLeftStart + child->GetWidth() + child->GetBorderWidth(); ++x)
+	{
+		if(x >= this->width)
+			continue;
+
+		for(int y = child->GetY() + child->GetHeight(); y < child->GetY() + child->GetBorderWidth() + child->GetHeight() && y < this->height; ++y)
+		{
+			const int pixelLocation = x + this->width * y;
+			this->buffer[pixelLocation] = this->foregroundWindow == child ? this->foregroundBorderColor : this->backgroundBorderColor;
+		}
+	}
+}
+
+ChildWindow::ChildWindow(int xPosition, int yPosition, int width, int height, int processId, int borderWidth) :
 		xPosition(xPosition),
 		yPosition(yPosition),
 		width(width),
 		height(height),
-		processId(processId)
+		processId(processId),
+		borderWidth(borderWidth)
 {
 
 }

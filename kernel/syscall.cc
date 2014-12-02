@@ -9,6 +9,7 @@
 #include "libk.h"
 #include "screenbuffer.h"
 #include "network.h"
+#include "kbd.h"
 
 void Syscall::init(void) {
     IDT::addTrapHandler(100,(uint32_t)syscallTrap,3);
@@ -288,6 +289,46 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		Process::current->sleepFor(a0);
 	}
 	return 0;
+	case 24: //ping(unsigned char ip[4])
+	{
+		Network::KernelNetwork->Ping((const unsigned char*)a0);
+	}
+	return 0;
+	case 25: //long GetKeyPresses(char* buf, int bufferLength);
+	{
+		char* buf = (char*)a0;
+		const int bufferLength = a1;
+		int bytesRead = 0;
+		const int count = ((BB<char>*)(Keyboard::is))->GetCount();
+		for(bytesRead = 0; bytesRead < bufferLength && bytesRead < count; ++bytesRead)
+		{
+			buf[bytesRead] = Keyboard::is->get();
+		}
+
+		return bytesRead;
+	}
+	return 0;
+	case 26: //QueueChildKeyInput(long childId, char key)
+	{
+		Process::processList[a0]->queueKeyPress(a1);
+	}
+	return 0;
+	case 27: //GetQueuedkeyPressCount()
+	{
+		return Process::current->getKeyPressCount();
+	}
+	case 28: //GetQueuedKeyPresses(char* buf, int len);
+	{
+		int foundCount = 0;
+		char* buf = (char*)a0;
+		for(foundCount = 0; foundCount < a1 && !Process::current->keyQueue.isEmpty(); ++foundCount)
+		{
+			buf[foundCount] = Process::current->keyQueue.removeHead();
+			++foundCount;
+		}
+
+		return foundCount;
+	}
     default:
         Process::trace("syscall(%d,%d,%d)",num,a0,a1);
         return -1;

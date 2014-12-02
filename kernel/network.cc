@@ -1,8 +1,10 @@
 #include "network.h"
 #include "machine.h"
+#include "process.h"
 
 Network* Network::KernelNetwork = nullptr;
 const unsigned char Network::myMac[6] = {0x52,0x54,0x00,0x12,0x34,0x56};
+const unsigned char Network::myIP[4] = {192,168,7,2};
 
 void Network::HandleNetworkInterrupt() 
 {
@@ -15,8 +17,6 @@ void Network::HandleNetworkInterrupt()
     if((interruptType & 1) > 0)
     {
         this->handlePacketReceiveInterrupt();
-        
-        
     }
     if((interruptType & 2) > 0)
     {
@@ -27,6 +27,59 @@ void Network::HandleNetworkInterrupt()
         //handle transmission complete
         this->endTxOKInterrupt();
     }
+    if((interruptType & 16) > 0)
+    {
+    	//buffer full.
+    	Debug::printf("Our network buffer is full.\n");
+    }
+}
+
+void Network::Ping(const unsigned char ip[4])
+{
+    unsigned char echoRequest[98];
+
+    unsigned char destMac[6];
+    while (! this->arpCache.GetEntry(ip, destMac))
+    {
+        this->sendARPRequest(ip);
+        Process::sleepFor(500);
+    }
+
+    memcpy(echoRequest, destMac, 6);
+    memcpy(echoRequest + 6, myMac, 6);
+    echoRequest[12] = 0x08;
+    echoRequest[13] = 0x00;
+
+    IPv4Header ipv4Header;
+    ipv4Header.protocol = 0x01;
+    memcpy(ipv4Header.srcIPAddress, myIP, 4);
+    memcpy(ipv4Header.destIPAddress, ip, 4);
+
+    this->calcChecksum((unsigned char *) &ipv4Header, sizeof(IPv4Header), ipv4Header.headerChecksum);
+
+    memcpy(echoRequest + 14, &ipv4Header, sizeof(IPv4Header));
+
+    ICMPHeader icmpHeader;
+    icmpHeader.type = 0x08;
+    icmpHeader.code = 0x00;
+    //don't know if makes sense
+    icmpHeader.identifier[0] = 0x10;
+    icmpHeader.identifier[1] = 0x0d;
+    icmpHeader.seqNum[0] = 0x00;
+    icmpHeader.seqNum[1] = 0x01;
+
+    memcpy(echoRequest + 14 + sizeof(IPv4Header), &icmpHeader, sizeof(ICMPHeader));
+
+    for (int i = 58; i < 98; ++i)
+    {
+        echoRequest[i] = i;
+    }
+
+    this->calcChecksum((unsigned char *) echoRequest + 34, 64, echoRequest + 36 );
+
+    Debug::printf("PINGINGINGINGING");
+
+    this->sendPacket(echoRequest, 98);
 }
 
 Network::Network() :
@@ -39,83 +92,129 @@ Network::Network() :
 
 void Network::handlePacketReceiveInterrupt()
 {
+	const unsigned char* const rcvBuffer = this->ReceiveBuffer + this->currentBufferPosition;
     const unsigned short packetLength = this->getCurrentPacketLength();
     const unsigned short realPacketLength = packetLength + 4;
-    Debug::printf("current packet length is %d\n", packetLength);
-
-    unsigned char sender[6];
-    this->getCurrentPacketSender(sender);
-    Debug::printf("sender is ");
-    for (int i = 0; i < 5; ++i) {
-        Debug::printf("%x:", sender[i]);
-    }
-    Debug::printf("%x\n", sender[5]);
-
     const PacketType etherType = getCurrentPacketType();
-    Debug::printf("type is %x\n", etherType);
-
-    switch(etherType)
+    if(this->isCurrentPacketForUs())    
     {
-        case PacketType::ARP:
-        {
-            Debug::printf("ARP PACKET");
-            ARPPacket request;
-            memcpy(&request, &this->ReceiveBuffer[this->currentBufferPosition + 18], 28);
-            //request.printPacket();
-
-            //this->arpCache.AddEntry(request.srcIP, request.srcMac);
-
-            unsigned char packet[42] = {0};
-            memcpy(packet, sender, 6);
-            memcpy(packet+6, myMac, 6);
-            packet[12] = 0x08;
-            packet[13] = 0x06;
-
-            ARPPacket reply;
-            memcpy(reply.hardwareType, request.hardwareType, 2);
-            memcpy(reply.protocolType, request.protocolType, 2);
-            reply.hardwareLen = request.hardwareLen;
-            reply.protocolLen = request.protocolLen;
-            reply.operationCode[0] = 0;
-            reply.operationCode[1] = 2;
-            memcpy(reply.srcMac, myMac, 6);
-            memcpy(reply.srcIP, request.destIP, 4);
-            memcpy(reply.destMac, request.srcMac, 6);
-            memcpy(reply.destIP, request.srcIP, 4);
-
-            //reply.printPacket();
-
-            memcpy(packet+14, &reply, 28);
-            //this->sendPacket(packet, 42);
-            break;
+        Debug::printf("current packet length is %d\n", packetLength);
+        unsigned char sender[6];
+        this->getCurrentPacketSender(sender);
+        Debug::printf("sender is ");
+        for (int i = 0; i < 5; ++i) {
+            Debug::printf("%x:", sender[i]);
         }
+        Debug::printf("%x\n", sender[5]);
 
-        case PacketType::IPv4:
+        //Debug::printf("type is %x\n", etherType);
+
+        switch(etherType)
         {
-            Debug::printf("IPV4 PACKET");
-            for(int a = 0; a < packetLength; ++a)
-            {     
-                Debug::printf("%02x (%03d) ", this->ReceiveBuffer[this->currentBufferPosition + a], 
-                    this->ReceiveBuffer[this->currentBufferPosition + a]);
+            case PacketType::ARP:
+            {
+                Debug::printf("ARP PACKET");
+                ARPPacket request;
+                memcpy(&request, &this->ReceiveBuffer[this->currentBufferPosition + 18], 28);
+                //request.printPacket();
+
+                this->arpCache.AddEntry(request.srcIP, request.srcMac);
+
+                unsigned char packet[42] = {0};
+                memcpy(packet, sender, 6);
+                memcpy(packet+6, myMac, 6);
+                packet[12] = 0x08;
+                packet[13] = 0x06;
+
+                ARPPacket reply;
+                memcpy(reply.hardwareType, request.hardwareType, 2);
+                memcpy(reply.protocolType, request.protocolType, 2);
+                reply.hardwareLen = request.hardwareLen;
+                reply.protocolLen = request.protocolLen;
+                reply.operationCode[0] = 0;
+                reply.operationCode[1] = 2;
+                memcpy(reply.srcMac, myMac, 6);
+                memcpy(reply.srcIP, request.destIP, 4);
+                memcpy(reply.destMac, request.srcMac, 6);
+                memcpy(reply.destIP, request.srcIP, 4);
+
+                //reply.printPacket();
+
+                memcpy(packet+14, &reply, 28);
+                this->sendPacket(packet, 42);
+                break;
             }
-            break;
+
+            case PacketType::IPv4:
+            {
+                Debug::printf("IPV4 PACKET\n");
+                IPv4Header ipv4Header;
+                memcpy(&ipv4Header, rcvBuffer + 18, sizeof(IPv4Header));
+                /*for(int a = 0; a < packetLength; ++a)
+                {     
+                    Debug::printf("%d: %02x (%03d) \n", a, rcvBuffer[a],
+                    		rcvBuffer[a]);
+                }*/
+                ipv4Header.print();
+
+                switch(ipv4Header.protocol)
+                {
+					case 1: //ICMP
+					{
+						Debug::printf("Received ICMP packet.\n");
+						ICMPHeader icmpHeader;
+						memcpy(&icmpHeader, rcvBuffer + 18 + sizeof(IPv4Header), sizeof(ICMPHeader));
+						icmpHeader.print();
+						switch(icmpHeader.type)
+						{
+						case 0:
+						{
+							Debug::printf("Received ICMP echo reply.\n");
+							break;
+						}
+						case 8:
+						{
+							Debug::printf("Received ICMP echo request.\n");
+							this->resplondToEchoRequest();
+							break;
+						}
+						default:
+							Debug::printf("Received unknown ICMP packet type %d.\n", icmpHeader.type);
+							break;
+						}
+					}
+					break;
+                }
+                break;
+            }
+
+            case PacketType::IPv6:
+            {
+            	Debug::printf("IPV6 PACKET");
+                break;
+            }
+
+            case PacketType::UNKNOWN:
+            {
+            	Debug::printf("UNKNOWN PACKET TYPE.");
+                break;
+            }
         }
-
-
-        case PacketType::IPv6:
-        {
-            break;
-        }
-
-        case PacketType::UNKNOWN:
-        {
-            break;
-        }
-
+    }
+    else
+    {
+        Debug::printf("Found somebody else's packet: %x %x %x %x %x %x\n",
+        		rcvBuffer[4],
+        		rcvBuffer[5],
+        		rcvBuffer[6],
+        		rcvBuffer[7],
+        		rcvBuffer[8],
+        		rcvBuffer[9]);
     }
 
     this->currentBufferPosition+= realPacketLength;
-    Debug::printf("\n");
+    this->currentBufferPosition = (this->currentBufferPosition + 3) & ~0x3;
+    Debug::printf("\nCurrent network receive buffer position: %d\n", this->currentBufferPosition);
     this->endRxOKInterrupt();
 }
 void Network::sendPacket(const unsigned char* data, int length)
@@ -132,6 +231,89 @@ void Network::sendPacket(const unsigned char* data, int length)
     currentBufferIndex %= 4;
 }
 
+void Network::resplondToEchoRequest()
+{
+	const int len = this->getCurrentPacketLength() - 4;
+	unsigned char* buffer = new unsigned char[len];
+	memcpy(buffer, this->currentBuffer() + 4, len);
+
+	//switch dest and src.
+	memcpy(buffer, this->currentBuffer() + 10, 6);
+	memcpy(buffer + 6, this->currentBuffer() + 4, 6);
+
+	//set type to response.
+	buffer[14 + sizeof(IPv4Header)] = 0;
+
+	//switch ipv4 dest and src.
+	memcpy(buffer + 26, this->currentBuffer() + 30 + 4, 4);
+	memcpy(buffer + 30, this->currentBuffer() + 26 + 4, 4);
+
+	this->sendPacket(buffer, len);
+	delete[] buffer;
+}
+
+void Network::sendARPRequest(const unsigned char ip[4])
+{
+    Debug::printf("SENDING ARP REQUEST");
+    ARPPacket request;
+    
+    unsigned char packet[42] = {0};
+    
+    for (int i = 0; i < 6; ++i)
+    {
+        packet[i] = 0xFF;
+    }
+
+    memcpy(packet+6, myMac, 6);
+    packet[12] = 0x08;
+    packet[13] = 0x06;
+
+    request.hardwareType[0] = 0x00;
+    request.hardwareType[1] = 0x01;
+    request.protocolType[0] = 0x08;
+    request.protocolType[1] = 0x00;
+    request.hardwareLen = 0x06;
+    request.protocolLen = 0x04;
+    request.operationCode[0] = 0x00;
+    request.operationCode[1] = 0x01;
+    memcpy(request.srcMac, myMac, 6);
+    memcpy(request.srcIP, myIP, 4);
+    request.destMac[6] = {0};
+    memcpy(request.destIP, ip, 4);
+
+    memcpy(packet+14, &request, 28);
+    this->sendPacket(packet, 42);
+
+}
+
+bool Network::isCurrentPacketForUs() const
+{
+    int i = 0;
+    for (; i < 6; ++i) 
+    {
+        //Debug::printf("Checking rcv %x vs our %x\n", this->ReceiveBuffer[this->currentBufferPosition + i + 4], myMac[i]);
+        if(this->ReceiveBuffer[this->currentBufferPosition + i + 4] != myMac[i])
+        {      
+            break;
+        }
+    }
+
+    if(i == 6)
+        return true;
+
+    i = 0;
+    for (; i < 6; ++i) 
+    {
+        //Debug::printf("Checking rcv %x vs broadcast %x\n", this->ReceiveBuffer[this->currentBufferPosition + i + 4], 0xff);
+        if(this->ReceiveBuffer[this->currentBufferPosition + i + 4] != 0xFF)
+        {
+            break;
+        }
+    }
+
+    return i == 6;
+}
+
 //Retrieves the length of the packet currently
 //pointed to by bufferPosition.
 unsigned short Network::getCurrentPacketLength() const
@@ -143,7 +325,8 @@ unsigned short Network::getCurrentPacketLength() const
 //pointed to by bufferPosition.
 void Network::getCurrentPacketSender(unsigned char sender[6])
 {
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 6; ++i) 
+    {
         sender[i] = this->ReceiveBuffer[this->currentBufferPosition + i + 10];
     }
 }
@@ -303,4 +486,58 @@ unsigned short Network::pciCheckVendor(unsigned char bus, unsigned char slot)
 	}
 
 	return vendor;
+}
+
+void ARPCache::AddEntry(const unsigned char ipAddress[4], const unsigned char macAddress[6])
+{
+    memcpy(this->cache[count].ipAddress, ipAddress, 4);
+    memcpy(this->cache[count].macAddress, macAddress, 6);
+    count = (count + 1) % 100;
+}
+
+bool ARPCache::GetEntry(const unsigned char ipAddress[4], unsigned char macAddress[6]) const
+{
+    for (int i = 0; i < 100; ++i)
+    {
+        bool f = true;
+        for (int j = 0; j < 4; ++j)
+        {
+            if (ipAddress[j] != this->cache[i].ipAddress[j])
+            {
+                f = false;
+                break;
+            }
+        }
+        if (f)
+        {
+            memcpy(macAddress, this->cache[i].macAddress, 6);
+            return true;
+        }
+    }
+    return false;
+}
+
+void Network::calcChecksum(unsigned char* header, int length, unsigned char checksum[2])
+{
+    unsigned long sum = 0;
+
+    while (length > 1)
+    {
+        sum += *((unsigned short *) header);
+        header += 2;
+        length -=2;
+    }
+
+    if (length > 0)
+    {
+        sum += *header;
+    }
+
+    if (sum >> 16) {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+
+    sum = ~sum;
+    checksum[0] = sum & 0xFF;
+    checksum[1] = sum >> 8;  
 }
