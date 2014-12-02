@@ -1,9 +1,5 @@
-extern "C" {
-	#include "libc.h"
-	#include "sys.h"
-}
+#include "permission.h"
 
-#include "libcc.h"
 
 /*
  * Mode numbers: 0 read; 1 write; 2 execute.
@@ -13,14 +9,12 @@ extern "C" {
  * Each user capability list is separated by a newline character
  */
 
-class Permission {
-	char* filePermissions;
-	unsigned int len;
-	Permission(long userID) {
-		LoadBuffer(userID);
+	Permission::Permission(long userID) {
+		loadBuffer(userID);
+		processBuffer();
 	}
 	// assume permissions file fits in one block for now
-	void LoadBuffer(long userID) {
+	void Permission::loadBuffer(long userID) {
 		// put the loaded buffer on heap and return the address
 		int userNum = 0;
 		char buf[512];
@@ -42,19 +36,22 @@ class Permission {
 		}
 		int len = end - start;
 		this->len = len;
-		filePermissions = new char[len];
+		this->buffer = new char[len];
 		for (int i = 0; i < len; i++) {
-			filePermissions[i] = buf[i + start];
+			this->buffer[i] = buf[i + start];
 		}
 	}
 
+	void Permission::processBuffer() {
+		;
+	}
+
 	// 0 for denied, 1 for granted
-	unsigned int Access(char* fileName, unsigned int mode) const {
+	unsigned int Permission::Access(char* fileName, unsigned int mode) const {
 		for(unsigned int i = 0; i < len; i++) {
 
 		}
 		return 0;
 	}
-};
 
 // Need to implement check for spaces in filename when implementing adding/writing to files
