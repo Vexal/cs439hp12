@@ -222,3 +222,11 @@ Sleep:
 	mov $0, %edx
 	int $100
 	ret
+
+.global GetKeyPresses
+GetKeyPresses:
+	mov $25, %eax
+	mov 4(%esp), %ecx
+	mov 8(%esp), %edx
+	int $100
+	ret

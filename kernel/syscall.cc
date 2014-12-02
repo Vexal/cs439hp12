@@ -9,6 +9,7 @@
 #include "libk.h"
 #include "screenbuffer.h"
 #include "network.h"
+#include "kbd.h"
 
 void Syscall::init(void) {
     IDT::addTrapHandler(100,(uint32_t)syscallTrap,3);
@@ -286,6 +287,20 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 	case 23: //wait(int milliseconds)
 	{
 		Process::current->sleepFor(a0);
+	}
+	return 0;
+	case 25: //long GetKeyPresses(char* buf, int bufferLength);
+	{
+		char* buf = (char*)a0;
+		const int bufferLength = a1;
+		int bytesRead = 0;
+		const int count = ((BB<char>*)(Keyboard::is))->GetCount();
+		for(bytesRead = 0; bytesRead < bufferLength && bytesRead < count; ++bytesRead)
+		{
+			buf[bytesRead] = Keyboard::is->get();
+		}
+
+		return bytesRead;
 	}
 	return 0;
     default:

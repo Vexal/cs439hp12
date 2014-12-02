@@ -56,8 +56,8 @@ void DesktopWindowManager::Run()
 {
 	while(1)
 	{
-		Sleep(1000);
-		//puts("rendering.\n");
+		Sleep(50);
+		this->handleKeyInput();
 		LockScreenBuffer(this->screenBufferId);
 		this->acquireNewChildProcesses();
 		this->renderChildren();
@@ -126,6 +126,47 @@ void DesktopWindowManager::renderChildren()
 
 		delete[] childWindowBuffer;
 		first = first->next;
+	}
+}
+
+void DesktopWindowManager::handleKeyInput()
+{
+	char buf[128];
+	const int keyPressCount = GetKeyPresses(buf, 128);
+
+	for(int a = 0; a < keyPressCount; ++a)
+	{
+		const char kp = buf[a] & ~128;
+		puts("detected key press: ");
+		char c[3] = {kp, '\n', 0};
+		puts(c);
+		if((buf[a] & 128) > 0)
+		{
+			puts("(key up)\n");
+		}
+		else
+		{
+			if(this->foregroundWindow != nullptr)
+			{
+				switch(kp)
+				{
+				case 'j':
+					this->foregroundWindow->xPosition-= 1;
+					break;
+				case 'l':
+					this->foregroundWindow->xPosition+= 1;
+					break;
+				case 'i':
+					this->foregroundWindow->yPosition-= 1;
+					break;
+				case 'k':
+					this->foregroundWindow->yPosition+= 1;
+					break;
+				case 'p':
+					break;
+				}
+			}
+		}
 	}
 }
 

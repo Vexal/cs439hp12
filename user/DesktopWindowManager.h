@@ -5,7 +5,7 @@
 
 class ChildWindow
 {
-private:
+public:
 	int xPosition;
 	int yPosition;
 	int width;
@@ -56,6 +56,7 @@ private:
 	void sendBufferData() const;
 
 	void renderWindowBorder(const ChildWindow* const window);
+	void handleKeyInput();
 };
 
 

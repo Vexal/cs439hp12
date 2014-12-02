@@ -21,6 +21,7 @@ Atomic32 Process::nextId;                     // next process ID
 Semaphore *Process::traceMutex;
 Timer* Process::timers = nullptr;            // pending timers
 Process* Process::idleProcess = nullptr;     // the idle process
+void* Process::keyboardHandler = nullptr;
 uint32_t Process::idleJiffies = 0;            // idle jiffies
 
 void Process::init() {

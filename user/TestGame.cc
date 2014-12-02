@@ -13,14 +13,16 @@ int main()
 
 	unsigned char buf[320 * 200];
 
-	for(int a = 0; a < 320 * 200; ++a)
-	{
-		buf[a] = 2;
-	}
 
+
+	int count = 0;
 	while(1)
 	{
-
+		++count;
+		for(int a = 0; a < 320 * 200; ++a)
+		{
+			buf[a] = count % 256;
+		}
 		Sleep(500);
 		//puts("attemping to lock buffer for writing: ");
 		//putdec(screenBufferId);

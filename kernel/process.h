@@ -29,7 +29,7 @@ public:
 
     // the idle process
     static Process *idleProcess;
-
+    static void* keyboardHandler;
     // idle Jiffies
     static uint32_t idleJiffies;
 
