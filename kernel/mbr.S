@@ -15,7 +15,29 @@
 
 	.global start
 start:
-	cli			# disable interrupts
+	cli			#disable interrupts
+		#in: es:di=4k buffer
+		#out: buffer filled with font
+		/*mov $fontLocation, %eax
+		shl $16, %eax
+		mov %ax, %di
+		mov $fontLocation, %eax
+		mov %ax, %es
+		push			%ds
+		push			%es
+		#ask BIOS to return VGA bitmap fonts
+		mov			$0x1130, %ax
+		mov			$6, %bh
+		int			$0x10
+		#copy charmap
+		push			%es
+		pop			%ds
+		pop			%es
+		mov			%bp, %si
+		mov			$1024, %cx//256*16/4, %cx,
+		rep			movsd
+		pop			%ds*/
+
 //i am writing here
 
 	mov $0, %ah
@@ -147,6 +169,9 @@ userDataSeg:
 tssDS:
 	.long 5 * 8
 
+.global fontLocation
+fontLocation:
+	.long 1024
 
 
 
