@@ -25,8 +25,18 @@ int main(int argc, char** args)
 	}
 	addr[3] = byte;
 
+
 	for(int a = 0; a < 15; ++a)
 	{
+		puts("Pinging: ");
+		putdec(addr[0]);
+		puts(".");
+		putdec(addr[1]);
+		puts(".");
+		putdec(addr[2]);
+		puts(".");
+		putdec(addr[3]);
+		puts("\n");
 		Ping(addr);
 		Sleep(1000);
 	}
