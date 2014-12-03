@@ -53,17 +53,6 @@ bool Network::SendPacket(Packet* packet)
 		break;
 	case PacketType::IPv4:
 		{
-			unsigned char destMac[6];
-			if(!this->arpCache.GetEntry(packet->IP, destMac))
-			{
-				Packet* p = new Packet(42);
-				memcpy(p->IP, packet->IP, 4);
-				p->type = PacketType::ARP;
-				p->isReply = false;
-				Process::networkProcess->QueueNetworkSend(p);
-				return false;
-			}
-
 			switch(packet->protocol)
 			{
 			case PacketProtocol::ICMP:
@@ -72,6 +61,19 @@ bool Network::SendPacket(Packet* packet)
 				{
 					this->sendPacket(packet->data, packet->length);
 				}
+                else 
+                {
+                    unsigned char destMac[6];
+                    if(!this->arpCache.GetEntry(packet->IP, destMac))
+                    {
+                        Packet* p = new Packet(42);
+                        memcpy(p->IP, packet->IP, 4);
+                        p->type = PacketType::ARP;
+                        p->isReply = false;
+                        Process::networkProcess->QueueNetworkSend(p);
+                        return false;
+                    }
+                }
 			}
 			break;
 			}
