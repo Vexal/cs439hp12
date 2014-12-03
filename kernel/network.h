@@ -11,6 +11,35 @@ enum class PacketType
 	IPv6
 };
 
+enum class PacketProtocol
+{
+	ICMP,
+	P439
+};
+
+struct Packet
+{
+	PacketType type;
+	PacketProtocol protocol;
+	unsigned long length;
+	unsigned char* data;
+	bool isReply;
+	unsigned char IP[4];
+
+	Packet(unsigned long length = 0) :
+		length(length),
+		data(new unsigned char[length])
+	{
+
+	}
+
+	~Packet()
+	{
+		delete[] data;
+	}
+};
+
+
 struct ARPEntry
 {
 	unsigned char ipAddress[4];
@@ -143,6 +172,7 @@ public:
 	void Init();
 	void HandleNetworkInterrupt();
 	void Ping(const unsigned char ip[4]);
+	void SendPacket(const Packet& packet);
 
 private:
 	unsigned short getCurrentPacketLength() const;
