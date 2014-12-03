@@ -42,6 +42,7 @@ void Network::SendPacket(Packet* packet)
 		{
 			if(packet->isReply)
 			{
+                Debug::printf("SENDING ARP REPLY\n");
 				this->sendPacket(packet->data, 42);
 			}
 			else
@@ -303,6 +304,7 @@ void Network::resplondToEchoRequest()
 	p->protocol = PacketProtocol::ICMP;
 	p->type = PacketType::IPv4;
 	p->length = len;
+    p->isReply = true;
 	Process::networkProcess->QueueNetworkSend(p);
 }
 
@@ -487,6 +489,7 @@ void Network::InitNetwork()
 	Network::KernelNetwork = new Network();
 	Network::KernelNetwork->Init();
 	Process::networkProcess = new NetworkProcess();
+    Process::networkProcess->start();
 }
 
 unsigned int Network::pciConfigReadWord(unsigned char bus, unsigned char slot, unsigned

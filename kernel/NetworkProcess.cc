@@ -10,14 +10,18 @@ NetworkProcess::NetworkProcess() :
 //send packets bbbbbbbbbbbbbbbbbbbbbbbbbbbb;
 long NetworkProcess::run()
 {
-	Process::disable();
-	while(!this->networkSending.isEmpty())
+	while(1)
 	{
-		Packet* nextPacket = this->networkSending.removeHead();
-		Network::KernelNetwork->SendPacket(nextPacket);
-		delete nextPacket;
+		Process::disable();
+		while(!this->networkSending.isEmpty())
+		{
+			Packet* nextPacket = this->networkSending.removeHead();
+			Network::KernelNetwork->SendPacket(nextPacket);
+			delete nextPacket;
+		}
+		Process::enable();
+		yield();
 	}
-	Process::enable();
 }
 
 void NetworkProcess::QueueNetworkSend(Packet* packet)

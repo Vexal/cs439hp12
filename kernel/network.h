@@ -28,7 +28,8 @@ struct Packet
 
 	Packet(unsigned long length) :
 		length(length),
-		data(new unsigned char[length])
+		data(new unsigned char[length]),
+		isReply(false)
 	{
 
 	}
