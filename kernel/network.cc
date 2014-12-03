@@ -34,7 +34,7 @@ void Network::HandleNetworkInterrupt()
     }
 }
 
-void Network::SendPacket(Packet* packet)
+bool Network::SendPacket(Packet* packet)
 {
 	switch(packet->type)
 	{
@@ -61,8 +61,7 @@ void Network::SendPacket(Packet* packet)
 				p->type = PacketType::ARP;
 				p->isReply = false;
 				Process::networkProcess->QueueNetworkSend(p);
-				Process::networkProcess->QueueNetworkSend(packet);
-				return;
+				return false;
 			}
 
 			switch(packet->protocol)
@@ -78,6 +77,8 @@ void Network::SendPacket(Packet* packet)
 			}
 		}
 	}
+
+    return true;
 }
 
 void Network::Ping(const unsigned char ip[4])

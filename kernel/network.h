@@ -173,7 +173,7 @@ public:
 	void Init();
 	void HandleNetworkInterrupt();
 	void Ping(const unsigned char ip[4]);
-	void SendPacket(Packet* packet);
+	bool SendPacket(Packet* packet);
 
 private:
 	unsigned short getCurrentPacketLength() const;

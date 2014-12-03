@@ -16,8 +16,14 @@ long NetworkProcess::run()
 		while(!this->networkSending.isEmpty())
 		{
 			Packet* nextPacket = this->networkSending.removeHead();
-			Network::KernelNetwork->SendPacket(nextPacket);
-			delete nextPacket;
+			if(!Network::KernelNetwork->SendPacket(nextPacket))
+			{
+				this->QueueNetworkSend(nextPacket);
+			}
+			else
+			{
+				delete nextPacket;
+			}
 		}
 		Process::enable();
 		yield();
