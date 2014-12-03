@@ -34,41 +34,41 @@ void Network::HandleNetworkInterrupt()
     }
 }
 
-void Network::SendPacket(const Packet& packet)
+void Network::SendPacket(Packet* packet)
 {
-	switch(packet.type)
+	switch(packet->type)
 	{
 	case PacketType::ARP:
 		{
-			if(packet.isReply)
+			if(packet->isReply)
 			{
-				this->sendPacket(packet.data, 42);
+				this->sendPacket(packet->data, 42);
 			}
 			else
 			{
-				this->sendARPRequest(packet.IP);
+				this->sendARPRequest(packet->IP);
 			}
 		}
 		break;
 	case PacketType::IPv4:
 		{
 			unsigned char destMac[6];
-			if(!this->arpCache.GetEntry(packet.IP, destMac))
+			if(!this->arpCache.GetEntry(packet->IP, destMac))
 			{
-				Packet p(42);
-				memcpy(p.IP, packet.IP, 4);
-				p.type = PacketType::ARP;
-				p.isReply = false;
+				Packet* p = new Packet(42);
+				memcpy(p->IP, packet->IP, 4);
+				p->type = PacketType::ARP;
+				p->isReply = false;
 				Process::networkProcess->QueueNetworkSend(p);
 			}
 
-			switch(packet.protocol)
+			switch(packet->protocol)
 			{
 			case PacketProtocol::ICMP:
 			{
-				if(packet.isReply)
+				if(packet->isReply)
 				{
-					this->sendPacket(packet.data, packet.length);
+					this->sendPacket(packet->data, packet->length);
 				}
 			}
 			break;
@@ -186,10 +186,10 @@ void Network::handlePacketReceiveInterrupt()
 
                 memcpy(packet+14, &reply, 28);
                 //this->sendPacket(packet, 42);
-                Packet p(42);
-                memcpy(p.data, packet, 42);
-                p.isReply = true;
-                p.type = PacketType::ARP;
+                Packet* p = new Packet(42);
+                memcpy(p->data, packet, 42);
+                p->isReply = true;
+                p->type = PacketType::ARP;
                 Process::networkProcess->QueueNetworkSend(p);
                 break;
             }
@@ -284,25 +284,25 @@ void Network::sendPacket(const unsigned char* data, int length)
 void Network::resplondToEchoRequest()
 {
 	const int len = this->getCurrentPacketLength() - 4;
-	Packet p(len);
-	memcpy(p.data, this->currentBuffer() + 4, len);
+	Packet* p = new Packet(len);
+	memcpy(p->data, this->currentBuffer() + 4, len);
 
 	//switch dest and src.
-	memcpy(p.data, this->currentBuffer() + 10, 6);
-	memcpy(p.data + 6, this->currentBuffer() + 4, 6);
+	memcpy(p->data, this->currentBuffer() + 10, 6);
+	memcpy(p->data + 6, this->currentBuffer() + 4, 6);
 
 	//set type to response.
-	p.data[14 + sizeof(IPv4Header)] = 0;
+	p->data[14 + sizeof(IPv4Header)] = 0;
 
 	//switch ipv4 dest and src.
-	memcpy(p.data + 26, this->currentBuffer() + 30 + 4, 4);
-	memcpy(p.data + 30, this->currentBuffer() + 26 + 4, 4);
+	memcpy(p->data + 26, this->currentBuffer() + 30 + 4, 4);
+	memcpy(p->data + 30, this->currentBuffer() + 26 + 4, 4);
 
 	//this->sendPacket(buffer, len);
 	//delete[] buffer;
-	p.protocol = PacketProtocol::ICMP;
-	p.type = PacketType::IPv4;
-	p.length = len;
+	p->protocol = PacketProtocol::ICMP;
+	p->type = PacketType::IPv4;
+	p->length = len;
 	Process::networkProcess->QueueNetworkSend(p);
 }
 

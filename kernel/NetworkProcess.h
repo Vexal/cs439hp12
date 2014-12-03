@@ -6,14 +6,14 @@
 class NetworkProcess : public Process
 {
 public:
-	SimpleQueue<Packet> networkSending;
-	SimpleQueue<Packet> networkReceiving;
+	SimpleQueue<Packet*> networkSending;
+	SimpleQueue<Packet*> networkReceiving;
 
 	NetworkProcess();
     virtual long run();
 
-    void QueueNetworkSend(const Packet& packet);
-    void QueueNetworkReceive(const Packet& packet);
+    void QueueNetworkSend(Packet* packet);
+    void QueueNetworkReceive(Packet* packet);
 };
 
 

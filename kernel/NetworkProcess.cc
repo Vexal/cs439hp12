@@ -13,17 +13,19 @@ long NetworkProcess::run()
 	Process::disable();
 	while(!this->networkSending.isEmpty())
 	{
-		Network::KernelNetwork->SendPacket(this->networkSending.removeHead());
+		Packet* nextPacket = this->networkSending.removeHead();
+		Network::KernelNetwork->SendPacket(nextPacket);
+		delete nextPacket;
 	}
 	Process::enable();
 }
 
-void NetworkProcess::QueueNetworkSend(const Packet& packet)
+void NetworkProcess::QueueNetworkSend(Packet* packet)
 {
 	this->networkSending.addTail(packet);
 }
 
-void NetworkProcess::QueueNetworkReceive(const Packet& packet)
+void NetworkProcess::QueueNetworkReceive(Packet* packet)
 {
 	this->networkReceiving.addTail(packet);
 }
