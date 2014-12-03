@@ -155,7 +155,7 @@ void Network::handlePacketReceiveInterrupt()
                     Debug::printf("%d: %02x (%03d) \n", a, rcvBuffer[a],
                     		rcvBuffer[a]);
                 }*/
-                ipv4Header.print();
+                //ipv4Header.print();
 
                 switch(ipv4Header.protocol)
                 {
@@ -164,12 +164,13 @@ void Network::handlePacketReceiveInterrupt()
 						Debug::printf("Received ICMP packet.\n");
 						ICMPHeader icmpHeader;
 						memcpy(&icmpHeader, rcvBuffer + 18 + sizeof(IPv4Header), sizeof(ICMPHeader));
-						icmpHeader.print();
+						//icmpHeader.print();
 						switch(icmpHeader.type)
 						{
 						case 0:
 						{
 							Debug::printf("Received ICMP echo reply.\n");
+                            ipv4Header.print();
 							break;
 						}
 						case 8:
