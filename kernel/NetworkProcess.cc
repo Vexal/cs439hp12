@@ -27,6 +27,8 @@ long NetworkProcess::run()
 			}
 		}
 
+		Process::sleepFor(500);
+
 		while(!tryAgainQueue.isEmpty())
 		{
 			this->networkSending.addTail(tryAgainQueue.removeHead());
