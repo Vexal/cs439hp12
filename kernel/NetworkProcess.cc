@@ -9,7 +9,6 @@ NetworkProcess::NetworkProcess() :
 {
 	for(int a = 0; a < NetworkProcess::portCount; ++a)
 	{
-		Debug::printf("%x is really zero.\n", portTable[a]);
 		//NetworkProcess::portTable[a] = nullptr;
 	}
 }
