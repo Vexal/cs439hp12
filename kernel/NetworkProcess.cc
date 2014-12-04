@@ -1,10 +1,17 @@
 #include "NetworkProcess.h"
 #include "pit.h"
+#include "socket.h"
+
+Socket* NetworkProcess::portTable[64] = {nullptr};
 
 NetworkProcess::NetworkProcess() :
 	Process("network",nullptr)
 {
-
+	for(int a = 0; a < NetworkProcess::portCount; ++a)
+	{
+		Debug::printf("%x is really zero.\n", portTable[a]);
+		//NetworkProcess::portTable[a] = nullptr;
+	}
 }
 
 //dispatch packets to destination processes;

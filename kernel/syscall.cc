@@ -12,6 +12,7 @@
 #include "kbd.h"
 #include "permission.h"
 #include "NetworkProcess.h"
+#include "socket.h"
 
 void Syscall::init(void) {
     IDT::addTrapHandler(100,(uint32_t)syscallTrap,3);
@@ -334,6 +335,13 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		Process::userPermissions = new Permission(a0);
 	}
 	return 0;
+	case 30: //OpenSocket(int protocol, int port)
+	{
+		Socket* socket = new Socket(static_cast<PacketProtocol>(a0), a1, Process::current->getId());
+		const long resourceId = Process::current->resources->open(socket);
+
+		return resourceId;
+	}
     default:
         Process::trace("syscall(%d,%d,%d)",num,a0,a1);
         return -1;

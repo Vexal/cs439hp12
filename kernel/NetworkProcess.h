@@ -3,9 +3,15 @@
 #include "process.h"
 #include "network.h"
 
+class Socket;
+
 class NetworkProcess : public Process
 {
 public:
+	static constexpr int portCount = 64;
+
+	static Socket* portTable[portCount]; //indexed by port number;
+
 	SimpleQueue<Packet*> networkSending;
 	SimpleQueue<Packet*> networkReceiving;
 	SimpleQueue<Packet*> tryAgainQueue;
