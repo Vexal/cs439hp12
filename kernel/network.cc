@@ -234,6 +234,18 @@ void Network::handlePacketReceiveInterrupt()
 						}
 					}
 					break;
+
+					case 2: //P439
+					{
+						const int len = ipv4Header.totalLength[0] * 256 + ipv4Header.totalLength[1] - 4;
+						Packet* p = new Packet(len);
+						memcpy(p->data, rcvBuffer + 18 + sizeof(IPv4Header) + 4, len);
+						p->port = ((int*)(rcvBuffer))[18 + sizeof(IPv4Header)];
+						p->protocol = PacketProtocol::P439;
+						p->type = PacketType::IPv4;
+						Process::networkProcess->QueueNetworkReceive(p);
+					}
+					break;
                 }
                 break;
             }

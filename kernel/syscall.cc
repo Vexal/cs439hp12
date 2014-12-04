@@ -337,7 +337,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 	return 0;
 	case 30: //OpenSocket(int protocol, int port)
 	{
-		Socket* socket = new Socket(static_cast<PacketProtocol>(a0), a1, Process::current->getId());
+		Socket* socket = new Socket(static_cast<PacketProtocol>(a0), a1, Process::current);
 		const long resourceId = Process::current->resources->open(socket);
 
 		return resourceId;

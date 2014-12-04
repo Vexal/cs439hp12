@@ -26,12 +26,13 @@ struct Packet
 	bool isReply;
 	unsigned char IP[4];
 	unsigned long sendTime;
-
+	unsigned int port;
 	Packet(unsigned long length) :
 		length(length),
 		data(new unsigned char[length]),
 		isReply(false),
-		sendTime(0)
+		sendTime(0),
+		port(0)
 	{
 
 	}

@@ -5,12 +5,9 @@
 Socket* NetworkProcess::portTable[64] = {nullptr};
 
 NetworkProcess::NetworkProcess() :
-	Process("network",nullptr)
+	Process("network", nullptr)
 {
-	for(int a = 0; a < NetworkProcess::portCount; ++a)
-	{
-		//NetworkProcess::portTable[a] = nullptr;
-	}
+
 }
 
 //dispatch packets to destination processes;
@@ -40,6 +37,15 @@ long NetworkProcess::run()
 			Process::disable();
 			this->networkSending.addTail(tryAgainQueue.removeHead());
 			Process::enable();
+		}
+
+		while(!this->networkReceiving.isEmpty())
+		{
+			Process::disable();
+			Packet* nextPacket = this->networkReceiving.removeHead();
+			Process::enable();
+
+			NetworkProcess::portTable[nextPacket->port]->GetOwner()->queueReceivePacket(nextPacket);
 		}
 
 		yield();

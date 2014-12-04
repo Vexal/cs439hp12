@@ -1,10 +1,10 @@
 #include "socket.h"
 
-Socket::Socket(PacketProtocol protocol, int port, int owningProcess) :
+Socket::Socket(PacketProtocol protocol, int port, Process* owner) :
 	Resource(ResourceType::SOCKET),
 	protocol(protocol),
 	port(port),
-	owningProcess(owningProcess)
+	owner(owner)
 {
 
 }

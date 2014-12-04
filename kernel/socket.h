@@ -3,19 +3,20 @@
 #include "resource.h"
 #include "network.h"
 
+class Process;
+
 class Socket : public Resource
 {
 	const PacketProtocol protocol;
 	const int port;
-	const int owningProcess;
+	Process* owner;
 
 public:
-
-	Socket(PacketProtocol protocol, int port, int owningProcess);
+	Socket(PacketProtocol protocol, int port, Process* owner);
 
 	inline PacketProtocol GetProtocol() const {return this->protocol;}
 	inline int GetPort() const {return this->port;}
-	inline int GetOwningProcess() const {return this->owningProcess;}
+	inline Process* GetOwner() const {return this->owner;}
 };
 
 
