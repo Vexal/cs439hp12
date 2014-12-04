@@ -1,4 +1,5 @@
 #include "NetworkProcess.h"
+#include "pit.h"
 
 NetworkProcess::NetworkProcess() :
 	Process("network",nullptr)
