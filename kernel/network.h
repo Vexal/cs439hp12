@@ -162,8 +162,8 @@ public:
 	static constexpr unsigned int networkBufferSize = 16000;
 	static Network* KernelNetwork;
 	static constexpr unsigned int ioaddr = 0xc000;
-	static const unsigned char myMac[6];
-	static const unsigned char myIP[4];
+	static unsigned char myMac[6];
+	static unsigned char myIP[4];
 	ARPCache arpCache;
 	long netCount;
 	long currentBufferPosition;
