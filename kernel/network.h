@@ -25,11 +25,13 @@ struct Packet
 	unsigned char* data;
 	bool isReply;
 	unsigned char IP[4];
+	unsigned long sendTime;
 
 	Packet(unsigned long length) :
 		length(length),
 		data(new unsigned char[length]),
-		isReply(false)
+		isReply(false),
+		sendTime(0)
 	{
 
 	}

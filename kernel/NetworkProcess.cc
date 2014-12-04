@@ -12,14 +12,15 @@ long NetworkProcess::run()
 {
 	while(1)
 	{
-		Process::disable();
-		SimpleQueue<Packet*> tryAgainQueue;
 		while(!this->networkSending.isEmpty())
 		{
+			Process::disable();
 			Packet* nextPacket = this->networkSending.removeHead();
+			Process::enable();
 			if(!Network::KernelNetwork->SendPacket(nextPacket))
 			{
-				tryAgainQueue.addTail(nextPacket);
+				nextPacket->sendTime = Pit::milliseconds() + 100;
+				this->tryAgainQueue.addTail(nextPacket);
 			}
 			else
 			{
@@ -27,24 +28,27 @@ long NetworkProcess::run()
 			}
 		}
 
-		Process::sleepFor(500);
-
-		while(!tryAgainQueue.isEmpty())
+		while(!this->tryAgainQueue.isEmpty() && this->tryAgainQueue.peekHead()->sendTime <= Pit::milliseconds())
 		{
+			Process::disable();
 			this->networkSending.addTail(tryAgainQueue.removeHead());
+			Process::enable();
 		}
 
-		Process::enable();
 		yield();
 	}
 }
 
 void NetworkProcess::QueueNetworkSend(Packet* packet)
 {
+	Process::disable();
 	this->networkSending.addTail(packet);
+	Process::enable();
 }
 
 void NetworkProcess::QueueNetworkReceive(Packet* packet)
 {
+	Process::disable();
 	this->networkReceiving.addTail(packet);
+	Process::enable();
 }

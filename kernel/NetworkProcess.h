@@ -8,6 +8,7 @@ class NetworkProcess : public Process
 public:
 	SimpleQueue<Packet*> networkSending;
 	SimpleQueue<Packet*> networkReceiving;
+	SimpleQueue<Packet*> tryAgainQueue;
 
 	NetworkProcess();
     virtual long run();
