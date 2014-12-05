@@ -21,7 +21,7 @@ struct Packet
 {
 	PacketType type;
 	PacketProtocol protocol;
-	unsigned long length;
+	const unsigned long length;
 	unsigned char* data;
 	bool isReply;
 	unsigned char IP[4];

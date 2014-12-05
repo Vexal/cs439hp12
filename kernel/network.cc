@@ -344,7 +344,6 @@ void Network::resplondToEchoRequest()
 	//delete[] buffer;
 	p->protocol = PacketProtocol::ICMP;
 	p->type = PacketType::IPv4;
-	p->length = len;
     p->isReply = true;
 	Process::networkProcess->QueueNetworkSend(p);
 }
