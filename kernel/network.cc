@@ -81,6 +81,20 @@ bool Network::SendPacket(Packet* packet)
                 }
 			}
 			break;
+			case PacketProtocol::P439:
+			{
+				unsigned char destMac[6];
+				if(!this->arpCache.GetEntry(packet->IP, destMac))
+				{
+					Packet* p = new Packet(42);
+					memcpy(p->IP, packet->IP, 4);
+					p->type = PacketType::ARP;
+					p->isReply = false;
+					Process::networkProcess->QueueNetworkSend(p);
+					return false;
+				}
+			}
+			break;
 			}
 		}
 	}

@@ -205,7 +205,7 @@ public:
     inline char getNextKeyPress() {keyMutex.lock(); const char c = this->keyQueue.removeHead(); keyMutex.unlock(); return c;}
     inline int getKeyPressCount() {keyMutex.lock(); const int sz = this->keyQueue.GetSize(); keyMutex.unlock(); return sz;}
     inline void queueReceivePacket(Packet* packet) {Process::disable(); this->receivedPacketsQueue.addTail(packet); Process::enable();}
-    inline Packet* getNextQueuedPacket() {Process::disable(); Packet* p = this->receivedPacketsQueue.removeHead(); Process::enable(); return p;}
+    inline Packet* getNextQueuedPacket() {Process::disable(); Packet* p = this->receivedPacketsQueue.isEmpty() ? nullptr : this->receivedPacketsQueue.removeHead(); Process::enable(); return p;}
     // print a trace message with the process identity prefixed to it
     void static vtrace(const char* msg, va_list ap);
     void static trace(const char* msg, ...);

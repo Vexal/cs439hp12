@@ -52,6 +52,11 @@ long NetworkProcess::run()
 	}
 }
 
+void NetworkProcess::WriteToSocket(Socket* s, const unsigned char destinationIP[4], const unsigned char* const buffer, int bufferLength)
+{
+
+}
+
 void NetworkProcess::QueueNetworkSend(Packet* packet)
 {
 	Process::disable();
