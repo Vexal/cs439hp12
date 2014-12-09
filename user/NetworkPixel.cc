@@ -51,6 +51,7 @@ int main(int argc, char** args)
 	{
 		sendPort = ((unsigned char)args[3][0]-48);
 	}
+	puts("Listen port is: "); putdec(listenPort); puts(" send port is: "); putdec(sendPort); puts(".\n");
 	const long screenBufferId = GetScreenBuffer();
 
 
