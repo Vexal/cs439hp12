@@ -35,9 +35,14 @@ void Network::HandleNetworkInterrupt()
     	//buffer full.
     	if(!hasBroke)
     	Debug::printf("Our network buffer is full.\n");
-    	outl(ioaddr + 0x38,  this->currentBufferPosition - 0x10);
+    	outw(ioaddr + 0x38, 8192);
         this->endRxOKInterrupt();
         hasBroke = true;
+    }
+    if((interruptType & 64) > 0)
+    {
+        Debug::printf("FIFO is full.\n");
+        this->endRxOKInterrupt();
     }
 }
 
@@ -355,7 +360,7 @@ void Network::handlePacketReceiveInterrupt()
     this->currentBufferPosition %= 8192;
 	if(debugLevel > 0)
 		Debug::printf("\nCurrent network receive buffer position: %d\n", this->currentBufferPosition);
-	 outl(ioaddr + 0x38,  this->currentBufferPosition - 0x10);
+	 outw(ioaddr + 0x38,  this->currentBufferPosition - 0x10);
     this->endRxOKInterrupt();
 }
 void Network::sendPacket(const unsigned char* data, int length)
