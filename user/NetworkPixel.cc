@@ -7,7 +7,7 @@ extern "C" {
 
 int main(int argc, char** args)
 {
-	if(argc != 2)
+	if(argc < 2)
 		return -1;
 
 	const char* addrStr = args[1];
@@ -41,7 +41,16 @@ int main(int argc, char** args)
 	puts(".");
 	putdec((unsigned int)addr[3]);
 	puts("\n");
-
+	int listenPort = 17;
+	int sendPort = 17;
+	if (argc >= 3)
+	{
+		sendPort = ((unsigned char)args[2][0]-48);
+	}
+	if (argc >= 3)
+	{
+		sendPort = ((unsigned char)args[3][0]-48);
+	}
 	const long screenBufferId = GetScreenBuffer();
 
 
@@ -53,7 +62,7 @@ int main(int argc, char** args)
 		buf[a] = 2;
 	}
 
-	const int socketDescriptor = OpenSocket(1, 17);
+	const int socketDescriptor = OpenSocket(1, listenPort);
 	if(socketDescriptor < 0)
 	{
 		puts("Failed to open socket.\n");
@@ -106,7 +115,7 @@ int main(int argc, char** args)
 			{
 				const char data[2] = {keyBuffer[a], 0};
 
-				WriteSocket(socketDescriptor, addr, (unsigned char*)data, strlen(data) + 1);
+				WriteSocket(socketDescriptor, addr, (unsigned char*)data, strlen(data) + 1, sendPort);
 			}
 
 			delete[] keyBuffer;

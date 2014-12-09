@@ -51,7 +51,7 @@ int main()
 	unsigned char destIP[4] = {192, 168, 7, 4};
 	const char* data = "abcdefghijklmnopqrstuvwxyz";
 
-	WriteSocket(socketDescriptor, destIP, (unsigned char*)data, strlen(data) + 1);
+	WriteSocket(socketDescriptor, destIP, (unsigned char*)data, strlen(data) + 1, 16);
 
 	while(1)
 	{

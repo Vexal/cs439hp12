@@ -379,7 +379,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		return packetLength;
 	}
 	return 0;
-	case 32: //WriteSocket(long socketDescriptor, const unsigned char destinationIP[4], const unsigned char* const buffer, long bufferSize);
+	case 32: //WriteSocket(long socketDescriptor, const unsigned char destinationIP[4], const unsigned char* const buffer, long bufferSize, unsigned char port);
 	{
 		//Debug::printf("Attempting to read buffersize: %d\n", reinterpret_cast<int*>(a0)[3]);
 		const int socketDescriptor = reinterpret_cast<int*>(a0)[0];
@@ -397,7 +397,8 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		//Debug::printf("Going to send a packet\n");
 		const unsigned char* const buffer = reinterpret_cast<unsigned char*>(reinterpret_cast<int*>(a0)[2]);
 		const int bufferSize = reinterpret_cast<int*>(a0)[3];
-		Process::networkProcess->WriteToSocket(socket, destIP, buffer, bufferSize);
+		const unsigned char port = reinterpret_cast<unsigned char*>(a0)[4];
+		Process::networkProcess->WriteToSocket(socket, destIP, port, buffer, bufferSize);
 	}
 	return 0;
 	case 33: //ToggleNetworkDebuggin(long truth)

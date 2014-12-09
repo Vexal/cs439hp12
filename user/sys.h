@@ -33,5 +33,5 @@ extern long GetQueuedKeyPresses(char* buf, int len);
 extern long SetUserPermissions(long uid);
 extern long OpenSocket(int protocol, int port);
 extern long ReadSocket(long socketDescriptor, unsigned char srcIP[4], unsigned char* buffer,  long bufferSize);
-extern long WriteSocket(long socketDescriptor, const unsigned char destinationIP[4], const unsigned char* const buffer, long bufferSize);
+extern long WriteSocket(long socketDescriptor, const unsigned char destinationIP[4], const unsigned char* const buffer, long bufferSize, unsigned char port);
 #endif
