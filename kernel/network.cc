@@ -7,11 +7,13 @@ unsigned char Network::myMac[6] = {0x52,0x54,0x00,0x12,0x34,0x56};
 unsigned char Network::myIP[4] = {192,168,7,2};
 int Network::debugLevel = 1;
 
+bool hasBroke = false;
 void Network::HandleNetworkInterrupt() 
 {
     ++this->netCount;
 
 	unsigned short interruptType = inw(ioaddr + 0x3E);
+	if(!hasBroke)
 	Debug::printf("Received interrupt of type: %x from the network card.\n", interruptType);
 
     
@@ -31,7 +33,11 @@ void Network::HandleNetworkInterrupt()
     if((interruptType & 16) > 0)
     {
     	//buffer full.
+    	if(!hasBroke)
     	Debug::printf("Our network buffer is full.\n");
+    	outl(ioaddr + 0x38,  this->currentBufferPosition - 0x10);
+        this->endRxOKInterrupt();
+        hasBroke = true;
     }
 }
 
@@ -251,7 +257,7 @@ void Network::handlePacketReceiveInterrupt()
             case PacketType::IPv4:
             {
         		if(debugLevel > 0)
-        			Debug::printf("IPV4 PACKET\n");
+        			Debug::printf("IPV4 PACKET: ");
                 IPv4Header ipv4Header;
                 memcpy(&ipv4Header, rcvBuffer + 18, sizeof(IPv4Header));
                 /*for(int a = 0; a < packetLength; ++a)
@@ -266,7 +272,7 @@ void Network::handlePacketReceiveInterrupt()
 					case 1: //ICMP
 					{
 						if(debugLevel > 0)
-							Debug::printf("Received ICMP packet.\n");
+							Debug::printf(" type ICMP\n");
 						ICMPHeader icmpHeader;
 						memcpy(&icmpHeader, rcvBuffer + 18 + sizeof(IPv4Header), sizeof(ICMPHeader));
 						//icmpHeader.print();
@@ -309,7 +315,7 @@ void Network::handlePacketReceiveInterrupt()
 						p->port = rcvBuffer[38];
 						p->protocol = PacketProtocol::P439;
 						p->type = PacketType::IPv4;
-                        //Debug::printf("Received a P439 Packet!!! %s\n\n", p->data);
+                        Debug::printf(" Type P439\n");
 
 						Process::networkProcess->QueueNetworkReceive(p);
 					}
@@ -349,6 +355,7 @@ void Network::handlePacketReceiveInterrupt()
     this->currentBufferPosition %= 8192;
 	if(debugLevel > 0)
 		Debug::printf("\nCurrent network receive buffer position: %d\n", this->currentBufferPosition);
+	 outl(ioaddr + 0x38,  this->currentBufferPosition - 0x10);
     this->endRxOKInterrupt();
 }
 void Network::sendPacket(const unsigned char* data, int length)
@@ -558,7 +565,7 @@ void Network::Init()
     Debug::printf("Receive buffer: %x, then after setting: %x\n", receiveBufferAddress, receiveBufferAddress2);
 
     const long imrMask = inw(ioaddr + 0x3C);
-    outw(ioaddr + 0x3C, 0x0005);
+    outw(ioaddr + 0x3C, 0xFFFF);
     const long imrMask2 = inw(ioaddr + 0x3C);
     Debug::printf("IMR mask: %x, then after setting: %x\n", imrMask, imrMask2);
 
