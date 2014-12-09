@@ -397,7 +397,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		//Debug::printf("Going to send a packet\n");
 		const unsigned char* const buffer = reinterpret_cast<unsigned char*>(reinterpret_cast<int*>(a0)[2]);
 		const int bufferSize = reinterpret_cast<int*>(a0)[3];
-		const unsigned char port = reinterpret_cast<unsigned char*>(a0)[4];
+		const unsigned char port = reinterpret_cast<unsigned int*>(a0)[4];
 		Process::networkProcess->WriteToSocket(socket, destIP, port, buffer, bufferSize);
 	}
 	return 0;
