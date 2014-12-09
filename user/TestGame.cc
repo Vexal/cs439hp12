@@ -6,8 +6,32 @@ extern "C" {
 #include "libcc.h"
 #include "smile.h"
 
-int main()
+int main(int argc, char** args)
 {
+	//get server ip address
+	const char* addrStr = args[1];
+
+	int i = 0;
+	unsigned char addr[4];
+	int j = 0;
+	unsigned char byte = 0;
+	while (addrStr[i] != 0)
+	{
+		if (addrStr[i] == '.')
+		{
+			addr[j] = byte;
+			j++;
+			byte = 0;
+		}
+		else
+		{
+			byte = byte * 10 + ((unsigned char)addrStr[i]-48);
+		}
+
+		++i;
+	}
+	addr[3] = byte;
+
 	const long screenBufferId = GetScreenBuffer();
 
 	char smileBuffer[512];
@@ -41,17 +65,13 @@ int main()
 	mySmile.x = 15;
 	mySmile.y = 18;
 
-	const int socketDescriptor = OpenSocket(1, 16);
+	const int socketDescriptor = OpenSocket(1, 3);
 	if(socketDescriptor < 0)
 	{
 		puts("Failed to open socket.\n");
 	}
 
 	puts("Successfully opened socket descriptor on port 16.\n");
-	unsigned char destIP[4] = {192, 168, 7, 4};
-	const char* data = "abcdefghijklmnopqrstuvwxyz";
-
-	WriteSocket(socketDescriptor, destIP, (unsigned char*)data, strlen(data) + 1, 16);
 
 	while(1)
 	{
@@ -66,6 +86,19 @@ int main()
 			puts("\n");
 			puts((const char*)buffer);
 			puts("\n");
+
+			if(buffer[0] == 'b' && buffer[1] == ':')
+			{
+				puts("Received ball position update: ");
+				int ballX;
+				int ballY;
+				memcpy(&ballX, buffer + 2, 4);
+				memcpy(&ballY, buffer + 6, 4);
+
+				putdec(ballX); puts(", "); putdec(ballY); puts("\n");
+				mySmile.x = ballX;
+				mySmile.y = ballY;
+			}
 		}
 
 
@@ -85,7 +118,7 @@ int main()
 			{
 				switch(keyBuffer[a])
 				{
-				case 'a':
+				/*case 'a':
 					mySmile.x-= 1;
 					break;
 				case 'd':
@@ -96,7 +129,13 @@ int main()
 					break;
 				case 's':
 					mySmile.y+= 1;
-					break;
+					break;*/
+				case 't':
+				{
+					const char* data = "c:";
+					WriteSocket(socketDescriptor, addr, (unsigned char*)data, strlen(data) + 1, 2);
+				}
+				break;
 				}
 			}
 
