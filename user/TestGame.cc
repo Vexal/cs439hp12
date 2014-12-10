@@ -6,8 +6,19 @@ extern "C" {
 #include "libcc.h"
 #include "smile.h"
 
+static const int leftPaddleX = 23;
+static const int rightPaddleX = 127;
+
+static const int paddleWidth = 10;
+static const int paddleHeight = 45;
+
 int main(int argc, char** args)
 {
+	if(argc != 2)
+	{
+		puts("ERROR: Requires argument <game server ip>.\n");
+		return -1;
+	}
 	//get server ip address
 	const char* addrStr = args[1];
 
@@ -15,6 +26,7 @@ int main(int argc, char** args)
 	unsigned char addr[4];
 	int j = 0;
 	unsigned char byte = 0;
+	int dotCount = 0;
 	while (addrStr[i] != 0)
 	{
 		if (addrStr[i] == '.')
@@ -22,6 +34,7 @@ int main(int argc, char** args)
 			addr[j] = byte;
 			j++;
 			byte = 0;
+			++dotCount;
 		}
 		else
 		{
@@ -30,9 +43,16 @@ int main(int argc, char** args)
 
 		++i;
 	}
+	if(dotCount != 3)
+	{
+		puts("ERROR: Invalid ip address.\n");
+		return -1;
+	}
 	addr[3] = byte;
 
-	const long screenBufferId = GetScreenBuffer();
+	const int width = 160;
+	const int height = 120;
+	const long screenBufferId = GetScreenBuffer(width, height);
 
 	char smileBuffer[512];
 	const long smileId = open("smile.pic");
@@ -42,10 +62,10 @@ int main(int argc, char** args)
 		return -1;
 	}
 
-	unsigned char buf[80 * 60];
+	unsigned char buf[width * height];
 	int count = 0;
 	int color = 2;
-	for(int a = 0; a < 80 * 60; ++a)
+	for(int a = 0; a < width * height; ++a)
 	{
 		buf[a] = 2;
 	}
@@ -65,6 +85,8 @@ int main(int argc, char** args)
 	mySmile.x = 15;
 	mySmile.y = 18;
 
+	int leftPaddleY = 50;
+	int rightPaddleY = 50;
 	const int socketDescriptor = OpenSocket(1, 3);
 	if(socketDescriptor < 0)
 	{
@@ -94,7 +116,8 @@ int main(int argc, char** args)
 				int ballY;
 				memcpy(&ballX, buffer + 2, 4);
 				memcpy(&ballY, buffer + 6, 4);
-
+				memcpy(&leftPaddleY, buffer + 10, 4);
+				memcpy(&rightPaddleY, buffer + 14, 4);
 				putdec(ballX); puts(", "); putdec(ballY); puts("\n");
 				mySmile.x = ballX;
 				mySmile.y = ballY;
@@ -102,7 +125,7 @@ int main(int argc, char** args)
 		}
 
 
-		for(int a = 0; a < 80 * 60; ++a)
+		for(int a = 0; a < width * height; ++a)
 		{
 			buf[a] = 2;
 		}
@@ -126,10 +149,19 @@ int main(int argc, char** args)
 					break;
 				case 'w':
 					mySmile.y-= 1;
-					break;
-				case 's':
-					mySmile.y+= 1;
 					break;*/
+				case 's':
+				{
+					const char* data = "s:";
+					WriteSocket(socketDescriptor, addr, (unsigned char*)data, strlen(data) + 1, 2);
+				}
+				break;
+				case 'w':
+				{
+					const char* data = "w:";
+					WriteSocket(socketDescriptor, addr, (unsigned char*)data, strlen(data) + 1, 2);
+				}
+				break;
 				case 't':
 				{
 					const char* data = "c:";
@@ -146,10 +178,28 @@ int main(int argc, char** args)
 		{
 			for(int x = 0; x < 16; ++x)
 			{
-				buf[(x + mySmile.x) * 60 + y + mySmile.y] = smile[x*16 + y] != '0' ? 4 : 0;
+				buf[(x + mySmile.x) * height + y + mySmile.y] = smile[x*16 + y] != '0' ? 4 : 0;
 			}
 		}
 
+		for(int x = leftPaddleX; x < leftPaddleX + paddleWidth; ++x)
+		{
+			for(int y = leftPaddleY - paddleHeight / 2; y < leftPaddleY + paddleHeight / 2; ++y)
+			{
+				if(x < 0 || x >= width || y < 0 || y >= height)
+					continue;
+				buf[x * height + y] = 3;
+			}
+		}
+		for(int x = rightPaddleX; x < rightPaddleX + paddleWidth; ++x)
+		{
+			for(int y = rightPaddleY - paddleHeight / 2; y < rightPaddleY + paddleHeight / 2; ++y)
+			{
+				if(x < 0 || x >= width || y < 0 || y >= height)
+					continue;
+				buf[x * height + y] = 3;
+			}
+		}
 		LockScreenBuffer(screenBufferId);
 		if(WriteScreenBuffer(screenBufferId, buf) < 0)
 		{

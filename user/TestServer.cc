@@ -5,6 +5,11 @@ extern "C" {
 
 #include "libcc.h"
 
+static const int width = 160;
+static const int height = 120;
+static const int leftPaddleEdge = 33;
+static const int rightPaddleEdge = 127;
+
 struct Vector
 {
 	int x;
@@ -45,14 +50,14 @@ public:
 			position.y = -position.y;
 			velocity.y = -velocity.y;
 		}
-		if ((position.x + 16) > 80)
+		if ((position.x + 16) > width)
 		{
-			position.x = position.x - (position.x + 16 - 80)*2;
+			position.x = position.x - (position.x + 16 - width)*2;
 			velocity.x = -velocity.x;
 		}
-		if ((position.y + 16) > 60)
+		if ((position.y + 16) > height)
 		{
-			position.y = position.y - (position.y + 16 - 60)*2;
+			position.y = position.y - (position.y + 16 - height)*2;
 			velocity.y = -velocity.y;
 		}
 	}
@@ -75,7 +80,7 @@ public:
 
 	void Start()
 	{
-		Vector pos(32,22);
+		Vector pos(72,52);
 		Vector vel(5,5);
 		ball = Ball(pos, vel);
 	}
@@ -112,6 +117,7 @@ int main(int argc, char** args)
 	Client* connections[256] = {nullptr};
 	List<Client*> clients;
 
+	int paddlePositions[2] = {60, 60};
 	while(1)
 	{
 
@@ -126,22 +132,40 @@ int main(int argc, char** args)
 
 			//check for connections;
 
-			if(buffer[0] == 'c' && buffer[1] == ':')
+			if(buffer[1] == ':')
 			{
-				if (connections[ip[3]] == nullptr)
+				switch(buffer[0])
 				{
-					Client* client = new Client();
-					memcpy(client->ip, ip, 4);
-					client->playerNum = clients.size;
-					connections[ip[3]] = client;
-					clients.Push(client);
-					puts("Received a new connection request ");
-					putdec(ip[3]);
-					puts("\n");
-					if(clients.size >= 2)
+				case 'c':
 					{
-						game.Start();
+						if (connections[ip[3]] == nullptr)
+						{
+							Client* client = new Client();
+							memcpy(client->ip, ip, 4);
+							client->playerNum = clients.size;
+							connections[ip[3]] = client;
+							clients.Push(client);
+							puts("Received a new connection request ");
+							putdec(ip[3]);
+							puts("\n");
+							if(clients.size >= 2)
+							{
+								game.Start();
+							}
+						}
 					}
+					break;
+
+				case 'w':
+				{
+					paddlePositions[connections[ip[3]]->playerNum] -= 2;
+				}
+				break;
+				case 's':
+				{
+					paddlePositions[connections[ip[3]]->playerNum] += 2;
+				}
+				break;
 				}
 			}
 			
@@ -155,12 +179,14 @@ int main(int argc, char** args)
 		List<Client*>::ListNode* node = clients.GetHead();
 		while(node != nullptr)
 		{
-			unsigned char data[10];
+			unsigned char data[18];
 			data[0] = 'b'; data[1] = ':';
 			memcpy(data + 2, &game.ball.position.x, 4);
 			memcpy(data + 6, &game.ball.position.y, 4);
+			memcpy(data + 10, &paddlePositions[0], 4);
+			memcpy(data + 14, &paddlePositions[1], 4);
 
-	 		WriteSocket(socketDescriptor, node->value->ip, (unsigned char*)data, 10, sendPort);
+	 		WriteSocket(socketDescriptor, node->value->ip, (unsigned char*)data, 18, sendPort);
 			node = node->next;
 		}
 		const int keyPressCount = GetQueuedKeyPressCount();
@@ -182,7 +208,7 @@ int main(int argc, char** args)
 		//unsigned char* buffer;
 		//buffer[0] = 'b';
 		//memcpy(buffer + 1, game)
-		Sleep(16);
+		Sleep(24);
 	}
 
 	return 0;

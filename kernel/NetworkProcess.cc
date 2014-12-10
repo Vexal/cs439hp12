@@ -64,7 +64,8 @@ void NetworkProcess::WriteToSocket(Socket* s, const unsigned char destinationIP[
 
 	if ((destinationIP[0] == 127) && (destinationIP[1] == 0) && (destinationIP[2] == 0) && (destinationIP[3] == 1))
 	{
-		this->QueueNetworkReceive(p);
+		if(NetworkProcess::portTable[p->port] != nullptr)
+			this->QueueNetworkReceive(p);
 	}
 	else
 	{

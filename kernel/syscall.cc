@@ -151,7 +151,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 	}
 	return 0;
 	
-	case 16: //get screen buffer
+	case 16: //get screen buffer(int width, int height)
 	{
 		//we have to know whether there is already a process controlling the global buffer.
 		//we need to fool subsequent programs into thinking they have access to a real buffer.
@@ -168,8 +168,8 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		{
 			ScreenBuffer* globalSreenBuffer = ScreenBuffer::globalBuffer;
 			globalSreenBuffer->Lock();
-			const int width = 80;
-			const int height = 60;
+			const int width = a0;
+			const int height = a1;
 			unsigned char* newBuffer = new unsigned char[width * height];
 			ScreenBuffer* screenBuffer = new ScreenBuffer(width, height, Process::current->getId(), reinterpret_cast<unsigned int>(newBuffer));
 			const long resourceId = Process::current->resources->open(screenBuffer);
@@ -197,6 +197,7 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 		//the requesting process can do things for them.
 		//we only want to grant this privilege to the process owning the global screen buffer.
 
+		//We also include the width and height of the new window in this array when we return.
 		ScreenBuffer* screenBuffer = ScreenBuffer::globalBuffer;
 		if(screenBuffer == nullptr || screenBuffer->GetOwnerProcessId() != Process::current->getId())
 		{
@@ -211,11 +212,11 @@ extern "C" long syscallHandler(uint32_t* context, long num, long a0, long a1) {
 			return 0;
 		}
 
-		int* processIds = (int*)a0;
+		int* processIds = reinterpret_cast<int*>(a0);
 
-		for(int a = 0; a < requestCount; ++a)
+		for(int a = 0; a < requestCount * 3; a += 3)
 		{
-			processIds[a] = screenBuffer->GetNextChildBuffer();
+			screenBuffer->GetNextChildBuffer(processIds[a * 3], processIds[a * 3 + 1], processIds[a * 3 + 2]);
 		}
 	}
 
