@@ -10,7 +10,7 @@ static const int leftPaddleX = 23;
 static const int rightPaddleX = 127;
 
 static const int paddleWidth = 10;
-static const int paddleHeight = 45;
+static const int paddleHeight = 50;
 
 int main(int argc, char** args)
 {
@@ -62,6 +62,14 @@ int main(int argc, char** args)
 		return -1;
 	}
 
+	char sadBuffer[2048];
+	const long sadId = open("sad.pic");
+	if(sadId < 0)
+	{
+		puts("failed to load sad.\n");
+		return -1;
+	}
+
 	unsigned char buf[width * height];
 	int count = 0;
 	int color = 2;
@@ -69,7 +77,8 @@ int main(int argc, char** args)
 	{
 		buf[a] = 2;
 	}
-	const long bytesRead = read(smileId, (void*)smileBuffer, 512);
+
+	long bytesRead = read(smileId, (void*)smileBuffer, 512);
 	char smile[256];
 
 	smileBuffer[bytesRead] = 0;
@@ -81,19 +90,37 @@ int main(int argc, char** args)
 		}
 	}
 
+	bytesRead = readFully(sadId, (void*)sadBuffer, 2048);
+	putdec(bytesRead);
+	char sad[1600];
+
+	sadBuffer[bytesRead] = 0;
+	for(int y = 0; y < 40; ++y)
+	{
+		for(int x = 0; x < 40; ++x)
+		{
+			sad[x * 40 + y] = sadBuffer[y * 41 + x];
+		}
+	}
+
 	Smile mySmile;
 	mySmile.x = 15;
 	mySmile.y = 18;
 
-	int leftPaddleY = 50;
-	int rightPaddleY = 50;
+	Smile mySad;
+	mySad.x = 20;
+	mySad.y = 0;
+
+	int leftPaddleY = 60;
+	int rightPaddleY = 60;
 	const int socketDescriptor = OpenSocket(1, 3);
 	if(socketDescriptor < 0)
 	{
 		puts("Failed to open socket.\n");
 	}
 
-	puts("Successfully opened socket descriptor on port 16.\n");
+	bool isSad = false;
+	bool isHappy = false;
 
 	while(1)
 	{
@@ -121,6 +148,20 @@ int main(int argc, char** args)
 				putdec(ballX); puts(", "); putdec(ballY); puts("\n");
 				mySmile.x = ballX;
 				mySmile.y = ballY;
+			}
+			else if(buffer[0] == 'g' && buffer[1] == ':')
+			{
+				puts("Received game result: ");
+				if (buffer[2] == 'l')
+				{
+					isSad = true;
+					puts("YOU LOST\n");
+				}
+				else
+				{
+					isHappy = true;
+					puts("YOU WON\n");
+				}
 			}
 		}
 
@@ -166,6 +207,8 @@ int main(int argc, char** args)
 				{
 					const char* data = "c:";
 					WriteSocket(socketDescriptor, addr, (unsigned char*)data, strlen(data) + 1, 2);
+
+					isSad = false;
 				}
 				break;
 				}
@@ -174,13 +217,28 @@ int main(int argc, char** args)
 			delete[] keyBuffer;
 		}
 
-		for(int y = 0; y < 16; ++y)
+		if (isSad)
 		{
-			for(int x = 0; x < 16; ++x)
+			for (int y = 0; y < 120; ++y)
 			{
-				buf[(x + mySmile.x) * height + y + mySmile.y] = smile[x*16 + y] != '0' ? 4 : 0;
+				for (int x = 0; x < 120; ++x)
+				{
+					buf[(x + mySad.x) * height + y + mySad.y] = sad[x/3*40 + y/3] != '0' ? 4 : 0;
+				}
 			}
 		}
+		else
+		{
+			for(int y = 0; y < 16; ++y)
+			{
+				for(int x = 0; x < 16; ++x)
+				{
+					buf[(x + mySmile.x) * height + y + mySmile.y] = smile[x*16 + y] != '0' ? 4 : 0;
+				}
+			}
+		}
+
+		
 
 		for(int x = leftPaddleX; x < leftPaddleX + paddleWidth; ++x)
 		{

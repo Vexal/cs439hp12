@@ -9,6 +9,8 @@ static const int width = 160;
 static const int height = 120;
 static const int leftPaddleEdge = 33;
 static const int rightPaddleEdge = 127;
+static const int paddleHeight = 50;
+static int paddlePositions[2] = {60, 60};
 
 struct Vector
 {
@@ -37,7 +39,7 @@ public:
 	Vector velocity;
 
 public:
-	void Move()
+	int Move()
 	{
 		position += velocity;
 		if (position.x < 0)
@@ -60,6 +62,35 @@ public:
 			position.y = position.y - (position.y + 16 - height)*2;
 			velocity.y = -velocity.y;
 		}
+
+		if (position.x < leftPaddleEdge)
+		{
+			int paddle = paddlePositions[0];
+			if ((position.y > (paddle - paddleHeight/2 - 16)) && (position.y < (paddle + paddleHeight/2)))
+			{
+				position.x = position.x - (position.x - leftPaddleEdge)*2;
+				velocity.x = -velocity.x;
+			}
+			else
+			{
+				return 1;
+			}
+		}
+
+		if ((position.x + 16) > rightPaddleEdge)
+		{
+			int paddle = paddlePositions[1];
+			if ((position.y > (paddle - paddleHeight/2 - 16)) && (position.y < (paddle + paddleHeight/2)))
+			{
+				position.x = position.x - (position.x + 16- rightPaddleEdge)*2;
+				velocity.x = -velocity.x;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		return -1;
 	}
 
 	Ball(Vector position, Vector velocity) : position(position), velocity(velocity)
@@ -71,21 +102,43 @@ class Game
 {
 public:
 	Ball ball;
+	int state;
 
 public:
 	void Update()
 	{
-		ball.Move();
+		if (! isGameOver())
+		{
+			this->state = ball.Move();
+		}
 	}
 
 	void Start()
 	{
 		Vector pos(72,52);
-		Vector vel(5,5);
+		Vector vel(3,3);
 		ball = Ball(pos, vel);
 	}
 
-	Game() : ball(Vector(0,0), Vector(0,0))
+	void Connect()
+	{
+		Vector pos(72,52);
+		Vector vel(0,0);
+		ball = Ball(pos, vel);
+		this->state = -1;
+	}
+
+	bool isGameOver()
+	{
+		return (this->state > -1);
+	}
+
+	int getWinner()
+	{
+		return this->state;
+	}
+
+	Game() : ball(Vector(72,52), Vector(0,0)), state(-1)
 	{
 
 	}
@@ -110,14 +163,11 @@ int main(int argc, char** args)
 		puts("Failed to open socket.\n");
 	}
 
-	puts("Successfully opened socket descriptor on port 17.\n");
-
 	Game game;
 
 	Client* connections[256] = {nullptr};
 	List<Client*> clients;
 
-	int paddlePositions[2] = {60, 60};
 	while(1)
 	{
 
@@ -140,15 +190,20 @@ int main(int argc, char** args)
 					{
 						if (connections[ip[3]] == nullptr)
 						{
+							if (game.isGameOver())
+							{
+								clients.Empty();					
+							}
 							Client* client = new Client();
 							memcpy(client->ip, ip, 4);
 							client->playerNum = clients.size;
 							connections[ip[3]] = client;
 							clients.Push(client);
+							game.Connect();
 							puts("Received a new connection request ");
 							putdec(ip[3]);
 							puts("\n");
-							if(clients.size >= 2)
+							if(clients.size == 2)
 							{
 								game.Start();
 							}
@@ -158,12 +213,26 @@ int main(int argc, char** args)
 
 				case 'w':
 				{
-					paddlePositions[connections[ip[3]]->playerNum] -= 2;
+					if ((connections[ip[3]] != nullptr) && (connections[ip[3]]->playerNum < 2))
+					{
+						paddlePositions[connections[ip[3]]->playerNum] -= 10;
+						if ((paddlePositions[connections[ip[3]]->playerNum] - paddleHeight/2) < 0)
+						{
+							paddlePositions[connections[ip[3]]->playerNum] = paddleHeight/2;
+						}
+					}
 				}
 				break;
 				case 's':
 				{
-					paddlePositions[connections[ip[3]]->playerNum] += 2;
+					if ((connections[ip[3]] != nullptr) && (connections[ip[3]]->playerNum < 2))
+					{
+						paddlePositions[connections[ip[3]]->playerNum] += 10;
+						if ((paddlePositions[connections[ip[3]]->playerNum] + paddleHeight/2) > height)
+						{
+							paddlePositions[connections[ip[3]]->playerNum] = height - paddleHeight/2;
+						}
+					}
 				}
 				break;
 				}
@@ -171,10 +240,7 @@ int main(int argc, char** args)
 			
 		}
 
-		if(clients.size >= 2)
-		{
-			game.Update();
-		}
+		game.Update();	
 
 		List<Client*>::ListNode* node = clients.GetHead();
 		while(node != nullptr)
@@ -189,7 +255,29 @@ int main(int argc, char** args)
 	 		WriteSocket(socketDescriptor, node->value->ip, (unsigned char*)data, 18, sendPort);
 			node = node->next;
 		}
-		const int keyPressCount = GetQueuedKeyPressCount();
+
+
+		if (game.isGameOver())
+		{
+			List<Client*>::ListNode* node = clients.GetHead();
+			while (node != nullptr)
+			{
+				unsigned char data[4];
+				data[0] = 'g'; data[1] = ':'; data[3] = 0;
+				if (node->value->playerNum == game.getWinner())
+				{
+					data[2] = 'w';
+				}
+				else
+				{
+					data[2] = 'l';
+				}
+				WriteSocket(socketDescriptor, node->value->ip, (unsigned char*)data, 4, sendPort);
+				connections[node->value->ip[3]] = nullptr;
+				node = node->next;
+			}
+		}
+		//const int keyPressCount = GetQueuedKeyPressCount();
 
 		// if(keyPressCount > 0)
 		// {
