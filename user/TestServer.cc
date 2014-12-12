@@ -42,20 +42,22 @@ public:
 	int Move()
 	{
 		position += velocity;
-		if (position.x < 0)
+		if (position.x < 17)
 		{
-			position.x = -position.x;
-			velocity.x = -velocity.x;
+			velocity.x = 0;
+			velocity.y = 0;
+			return 1;
 		}
 		if (position.y < 0)
 		{
 			position.y = -position.y;
 			velocity.y = -velocity.y;
 		}
-		if ((position.x + 16) > width)
+		if ((position.x + 16) > (width - 17))
 		{
-			position.x = position.x - (position.x + 16 - width)*2;
-			velocity.x = -velocity.x;
+			velocity.x = 0;
+			velocity.y = 0;
+			return 0;
 		}
 		if ((position.y + 16) > height)
 		{
@@ -63,7 +65,7 @@ public:
 			velocity.y = -velocity.y;
 		}
 
-		if (position.x < leftPaddleEdge)
+		if ((position.x < leftPaddleEdge) && ((position.x - velocity.x) >= leftPaddleEdge))
 		{
 			int paddle = paddlePositions[0];
 			if ((position.y > (paddle - paddleHeight/2 - 16)) && (position.y < (paddle + paddleHeight/2)))
@@ -73,11 +75,11 @@ public:
 			}
 			else
 			{
-				return 1;
+				return -2;
 			}
 		}
 
-		if ((position.x + 16) > rightPaddleEdge)
+		if (((position.x + 16) > rightPaddleEdge) && ((position.x + 16 - velocity.x) <= rightPaddleEdge))
 		{
 			int paddle = paddlePositions[1];
 			if ((position.y > (paddle - paddleHeight/2 - 16)) && (position.y < (paddle + paddleHeight/2)))
@@ -87,7 +89,7 @@ public:
 			}
 			else
 			{
-				return 0;
+				return -2;
 			}
 		}
 		return -1;
@@ -118,6 +120,8 @@ public:
 		Vector pos(72,52);
 		Vector vel(3,3);
 		ball = Ball(pos, vel);
+		paddlePositions[0] = 60;
+		paddlePositions[1] = 60;
 	}
 
 	void Connect()
@@ -133,12 +137,17 @@ public:
 		return (this->state > -1);
 	}
 
+	bool isPaddleFrozen()
+	{
+		return (this->state == -2);
+	}
+
 	int getWinner()
 	{
 		return this->state;
 	}
 
-	Game() : ball(Vector(72,52), Vector(0,0)), state(-1)
+	Game() : ball(Vector(72,52), Vector(0,0)), state(-2)
 	{
 
 	}
@@ -192,7 +201,7 @@ int main(int argc, char** args)
 						{
 							if (game.isGameOver())
 							{
-								clients.Empty();					
+								clients.Empty();				
 							}
 							Client* client = new Client();
 							memcpy(client->ip, ip, 4);
@@ -200,6 +209,9 @@ int main(int argc, char** args)
 							connections[ip[3]] = client;
 							clients.Push(client);
 							game.Connect();
+							puts("STATE is ");
+							putdec(game.state);
+							puts("\n");
 							puts("Received a new connection request ");
 							putdec(ip[3]);
 							puts("\n");
@@ -213,7 +225,7 @@ int main(int argc, char** args)
 
 				case 'w':
 				{
-					if ((connections[ip[3]] != nullptr) && (connections[ip[3]]->playerNum < 2))
+					if ((! game.isPaddleFrozen()) && (connections[ip[3]] != nullptr) && (connections[ip[3]]->playerNum < 2))
 					{
 						paddlePositions[connections[ip[3]]->playerNum] -= 10;
 						if ((paddlePositions[connections[ip[3]]->playerNum] - paddleHeight/2) < 0)
@@ -225,7 +237,7 @@ int main(int argc, char** args)
 				break;
 				case 's':
 				{
-					if ((connections[ip[3]] != nullptr) && (connections[ip[3]]->playerNum < 2))
+					if ((! game.isPaddleFrozen()) && (connections[ip[3]] != nullptr) && (connections[ip[3]]->playerNum < 2))
 					{
 						paddlePositions[connections[ip[3]]->playerNum] += 10;
 						if ((paddlePositions[connections[ip[3]]->playerNum] + paddleHeight/2) > height)
@@ -240,25 +252,31 @@ int main(int argc, char** args)
 			
 		}
 
-		game.Update();	
+		game.Update();
 
-		List<Client*>::ListNode* node = clients.GetHead();
-		while(node != nullptr)
+		if (! game.isGameOver())
 		{
-			unsigned char data[18];
-			data[0] = 'b'; data[1] = ':';
-			memcpy(data + 2, &game.ball.position.x, 4);
-			memcpy(data + 6, &game.ball.position.y, 4);
-			memcpy(data + 10, &paddlePositions[0], 4);
-			memcpy(data + 14, &paddlePositions[1], 4);
 
-	 		WriteSocket(socketDescriptor, node->value->ip, (unsigned char*)data, 18, sendPort);
-			node = node->next;
+			List<Client*>::ListNode* node = clients.GetHead();
+			while(node != nullptr)
+			{
+				unsigned char data[18];
+				data[0] = 'b'; data[1] = ':';
+				memcpy(data + 2, &game.ball.position.x, 4);
+				memcpy(data + 6, &game.ball.position.y, 4);
+				memcpy(data + 10, &paddlePositions[0], 4);
+				memcpy(data + 14, &paddlePositions[1], 4);
+
+		 		WriteSocket(socketDescriptor, node->value->ip, (unsigned char*)data, 18, sendPort);
+				node = node->next;
+			}
 		}
-
-
-		if (game.isGameOver())
+		else
 		{
+			puts("STATE is ");
+			putdec(game.state);
+			puts("\n");
+			puts("Sending game results\n");
 			List<Client*>::ListNode* node = clients.GetHead();
 			while (node != nullptr)
 			{

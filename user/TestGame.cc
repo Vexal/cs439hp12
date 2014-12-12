@@ -70,6 +70,14 @@ int main(int argc, char** args)
 		return -1;
 	}
 
+	char happyBuffer[2048];
+	const long happyId = open("happy.pic");
+	if(happyId < 0)
+	{
+		puts("failed to load happy.\n");
+		return -1;
+	}
+
 	unsigned char buf[width * height];
 	int count = 0;
 	int color = 2;
@@ -91,7 +99,6 @@ int main(int argc, char** args)
 	}
 
 	bytesRead = readFully(sadId, (void*)sadBuffer, 2048);
-	putdec(bytesRead);
 	char sad[1600];
 
 	sadBuffer[bytesRead] = 0;
@@ -103,13 +110,25 @@ int main(int argc, char** args)
 		}
 	}
 
+	bytesRead = readFully(happyId, (void*)happyBuffer, 2048);
+	char happy[1600];
+
+	happyBuffer[bytesRead] = 0;
+	for(int y = 0; y < 40; ++y)
+	{
+		for(int x = 0; x < 40; ++x)
+		{
+			happy[x * 40 + y] = happyBuffer[y * 41 + x];
+		}
+	}
+
 	Smile mySmile;
 	mySmile.x = 15;
 	mySmile.y = 18;
 
-	Smile mySad;
-	mySad.x = 20;
-	mySad.y = 0;
+	Smile myFace;
+	myFace.x = 20;
+	myFace.y = 0;
 
 	int leftPaddleY = 60;
 	int rightPaddleY = 60;
@@ -148,6 +167,8 @@ int main(int argc, char** args)
 				putdec(ballX); puts(", "); putdec(ballY); puts("\n");
 				mySmile.x = ballX;
 				mySmile.y = ballY;
+				isSad = false;
+				isHappy = false;
 			}
 			else if(buffer[0] == 'g' && buffer[1] == ':')
 			{
@@ -208,7 +229,8 @@ int main(int argc, char** args)
 					const char* data = "c:";
 					WriteSocket(socketDescriptor, addr, (unsigned char*)data, strlen(data) + 1, 2);
 
-					isSad = false;
+					//isSad = false;
+					//isHappy = false;
 				}
 				break;
 				}
@@ -223,7 +245,17 @@ int main(int argc, char** args)
 			{
 				for (int x = 0; x < 120; ++x)
 				{
-					buf[(x + mySad.x) * height + y + mySad.y] = sad[x/3*40 + y/3] != '0' ? 4 : 0;
+					buf[(x + myFace.x) * height + y + myFace.y] = sad[x/3*40 + y/3] != '0' ? 1 : 8;
+				}
+			}
+		}
+		else if (isHappy)
+		{
+			for (int y = 0; y < 120; ++y)
+			{
+				for (int x = 0; x < 120; ++x)
+				{
+					buf[(x + myFace.x) * height + y + myFace.y] = happy[x/3*40 + y/3] != '0' ? 12 : 15;
 				}
 			}
 		}
