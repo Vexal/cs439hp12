@@ -150,7 +150,9 @@ int main(int argc, char** args)
 
 		if (bytesFromNetwork > 0)
 		{
+			puts("Received ");
 			putdec(bytesFromNetwork);
+			puts(" bytes\n");
 			puts("\n");
 			puts((const char*)buffer);
 			puts("\n");

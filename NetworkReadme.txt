@@ -32,5 +32,14 @@ arp -a (to see mac address cache)
 sudo arp -s <address> <max>
 
 
-qemu-system-x86_64 -net nic,model=rtl8139,macaddr=52:54:00:12:34:65 -net tap,ifname=tap1 --serial mon:stdio -hdc kernel/kernel.img -hdd fat439/user.img
+
+
+//To run the game
+1. create taps
+2. run the first qemu: qemu-system-x86_64 -net nic,model=rtl8139 -net tap,ifname=tap0 --serial mon:stdio -hdc kernel/kernel.img -hdd fat439/user.img
+3. run the second qemu: qemu-system-x86_64 -net nic,model=rtl8139,macaddr=52:54:00:12:34:65 -net tap,ifname=tap1 --serial mon:stdio -hdc kernel/kernel.img -hdd fat439/user.img
+4. in the second qemu: &TestServer
+5. in the second qemu: &TestGame 127.0.0.1
+6. in the first qemu: &TestGame 192.168.7.4
+7. type "t" in both windows and the game will start
 
